@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F47735">
+<title>Cartrack Insurance — Premium Comparison</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/logos/cartrack-insurance-mark.png">
+
+<!-- Cartrack Insurance Compliance Design System — token layer only (plain CSS custom properties) -->
+<link rel="stylesheet" href="_ds/cartrack-insurance-compliance-design-sys-6fdc1bd8-d4b3-4d41-9483-367d24521aed/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/cartrack-insurance-compliance-design-sys-6fdc1bd8-d4b3-4d41-9483-367d24521aed/tokens/colors.css">
+<link rel="stylesheet" href="_ds/cartrack-insurance-compliance-design-sys-6fdc1bd8-d4b3-4d41-9483-367d24521aed/tokens/typography.css">
+<link rel="stylesheet" href="_ds/cartrack-insurance-compliance-design-sys-6fdc1bd8-d4b3-4d41-9483-367d24521aed/tokens/layout.css">
+<link rel="stylesheet" href="_ds/cartrack-insurance-compliance-design-sys-6fdc1bd8-d4b3-4d41-9483-367d24521aed/tokens/base.css">
+
+<style>
+  :root { --maxw: 1120px; --font-head: "Saira", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", system-ui, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, monospace; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--color-canvas, #F4F6F8); color: var(--color-text, #14161B);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
+  h1, h2, h3, .head { font-family: var(--font-head); }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  button { font-family: inherit; }
+
+  /* ---- Masthead ---- */
+  .masthead { background: var(--color-surface-inverse, #0B0C0F); color: #fff;
+    padding: 12px max(16px, env(safe-area-inset-left)); display: flex; align-items: center;
+    gap: 16px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img { height: 26px; width: auto; display: block; }
+  .brand .name { font-family: var(--font-head); font-weight: 800; letter-spacing: .02em;
+    font-size: 15px; line-height: 1; }
+  .brand .name small { display: block; font-size: 10px; font-weight: 600; letter-spacing: .18em;
+    color: var(--orange-400, #F58C4F); margin-top: 3px; }
+  .steps { display: flex; gap: 4px; margin-left: 8px; flex-wrap: wrap; }
+  .step { display: flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 6px;
+    font-size: 12px; color: var(--ink-300, #A8AFBC); cursor: pointer; border: 1px solid transparent;
+    background: transparent; }
+  .step[aria-current="true"] { color: #fff; background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.12); }
+  .step .n { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border-radius: 4px;
+    background: rgba(255,255,255,.1); }
+  .step[aria-current="true"] .n { background: var(--orange-500, #F47735); color: #fff; }
+  .spacer { flex: 1 1 auto; }
+  .rm { display: flex; align-items: center; gap: 9px; background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 5px 10px; }
+  .rm .av { width: 30px; height: 30px; border-radius: 50%; background: var(--orange-500,#F47735);
+    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700;
+    font-family: var(--font-head); font-size: 12px; }
+  .rm select { background: transparent; color: #fff; border: none; font-family: var(--font-head);
+    font-weight: 700; font-size: 13px; outline: none; }
+  .rm select option { color: #14161B; }
+  .rm .role { font-size: 10px; color: var(--ink-300,#A8AFBC); }
+
+  /* ---- Page ---- */
+  main { max-width: var(--maxw); margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left)) 64px; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--color-accent, #F47735); }
+  h1 { font-size: 30px; font-weight: 800; margin: 6px 0 10px; }
+  .lede { color: var(--color-text-muted, #5E6675); max-width: 680px; margin: 0 0 24px; }
+
+  .card { background: var(--color-surface, #fff); border: 1px solid var(--color-border, #CDD2DB);
+    border-radius: 12px; }
+  .card + .card { margin-top: 20px; }
+  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 18px; border-bottom: 1px solid var(--color-divider, #DFE3E9); flex-wrap: wrap; }
+  .card-h h2 { font-size: 14px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .card-h .n { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-subtle,#7C8492); }
+  .card-b { padding: 18px; }
+  .muted { color: var(--color-text-muted, #5E6675); }
+
+  label.field { display: block; }
+  label.field .lab { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--color-text-muted, #5E6675); margin-bottom: 6px; }
+  input, select.inp, textarea { width: 100%; padding: 11px 12px; border: 1px solid var(--color-border, #CDD2DB);
+    border-radius: 8px; font-family: inherit; font-size: 14px; background: #fff; color: inherit; }
+  textarea { resize: vertical; min-height: 70px; }
+  input:focus, select.inp:focus, textarea:focus { outline: 2px solid var(--color-focus-ring, #F47735);
+    outline-offset: 1px; border-color: var(--color-accent, #F47735); }
+  input.sm { padding: 7px 9px; font-size: 13px; }
+  input.money { font-family: var(--font-mono); text-align: right; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .dropzone { border: 1.5px dashed var(--color-border-strong, #A8AFBC); border-radius: 10px;
+    padding: 26px 18px; text-align: center; cursor: pointer; background: var(--ink-25, #FAFBFC);
+    transition: border-color .15s, background .15s; }
+  .dropzone:hover, .dropzone.drag { border-color: var(--color-accent, #F47735); background: var(--orange-50,#FEF4EC); }
+  .dropzone .big { font-weight: 700; }
+  .dropzone .sub { font-size: 12px; color: var(--color-text-subtle,#7C8492); margin-top: 4px; }
+
+  .file { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid var(--color-border,#CDD2DB);
+    border-radius: 9px; margin-bottom: 10px; background: #fff; }
+  .file .kind { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: #fff;
+    padding: 3px 6px; border-radius: 4px; }
+  .file .kind.PDF { background: var(--red-600,#BE3A30); }
+  .file .kind.XLSX { background: var(--green-700,#166B46); }
+  .file .meta { flex: 1 1 auto; min-width: 0; }
+  .file .meta .nm { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file .meta .st { font-size: 11px; color: var(--color-text-subtle,#7C8492); margin-top: 2px; }
+  .file .x { border: none; background: transparent; cursor: pointer; color: var(--color-text-subtle,#7C8492);
+    font-size: 18px; line-height: 1; padding: 4px; border-radius: 6px; }
+  .file .x:hover { background: var(--red-100,#FBE9E7); color: var(--red-600,#BE3A30); }
+  .pill { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
+  .pill.ok, .pill.saving, .pill.added { background: var(--green-100,#E6F3EC); color: var(--green-700,#166B46); }
+  .pill.busy { background: var(--blue-100,#E8EEF9); color: var(--blue-700,#21437F); }
+  .pill.err, .pill.gap { background: var(--red-100,#FBE9E7); color: var(--red-700,#98271F); }
+  .pill.increase { background: var(--amber-100,#FAF0D9); color: var(--amber-700,#8A610C); }
+  .pill.matched { background: var(--ink-100,#ECEEF2); color: var(--ink-600,#454C58); }
+
+  .bar { position: sticky; bottom: 0; background: color-mix(in srgb, var(--color-canvas,#F4F6F8) 92%, transparent);
+    backdrop-filter: blur(6px); border-top: 1px solid var(--color-border,#CDD2DB); padding: 12px 0;
+    margin: 28px calc(-1 * max(16px, env(safe-area-inset-left))) 0; }
+  .bar-in { max-width: var(--maxw); margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left));
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .btn { padding: 11px 18px; border-radius: 9px; font-weight: 700; font-size: 14px; cursor: pointer;
+    border: 1px solid var(--color-border,#CDD2DB); background: #fff; color: var(--color-text,#14161B); }
+  .btn.primary { background: var(--color-accent,#F47735); border-color: var(--color-accent,#F47735); color: #fff; }
+  .btn.primary:hover { background: var(--color-accent-hover,#E2631C); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.sm { padding: 7px 12px; font-size: 12px; }
+  .btn.ghost { background: transparent; }
+  .btn.danger { color: var(--red-600,#BE3A30); }
+
+  .note { font-size: 12px; color: var(--color-text-muted,#5E6675); display: flex; gap: 8px; align-items: flex-start; }
+  .note .dot { color: var(--color-accent,#F47735); font-weight: 800; }
+
+  /* ---- Review: rollup ---- */
+  .rollup { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .stat { background: var(--color-surface,#fff); border: 1px solid var(--color-border,#CDD2DB);
+    border-radius: 12px; padding: 14px 16px; }
+  .stat .lab { font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--color-text-subtle,#7C8492); margin-bottom: 5px; }
+  .stat .val { font-family: var(--font-mono); font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .sub { font-size: 11px; color: var(--color-text-subtle,#7C8492); margin-top: 3px; }
+
+  /* ---- Review: building / quote ---- */
+  .bmeta { display: grid; grid-template-columns: 2fr 1.4fr 2fr 1fr; gap: 10px; }
+  .qtabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .qtab { padding: 6px 12px; border-radius: 20px; border: 1px solid var(--color-border,#CDD2DB);
+    background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .qtab[aria-current="true"] { background: var(--ink-950,#0B0C0F); color: #fff; border-color: var(--ink-950,#0B0C0F); }
+  .qmeta { display: grid; grid-template-columns: 1.6fr 1fr 1.4fr auto; gap: 10px; align-items: end; }
+
+  /* line grid: section | cur limit | cur R | prop limit | prop R | delta | status | x */
+  .lines { border: 1px solid var(--color-border,#CDD2DB); border-radius: 10px; overflow: hidden; margin-top: 14px; }
+  .lrow { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr .9fr .8fr 34px;
+    gap: 0; align-items: center; border-bottom: 1px solid var(--color-divider,#DFE3E9); background: #fff; }
+  .lrow:last-child { border-bottom: none; }
+  .lrow > div { padding: 7px 8px; min-width: 0; }
+  .lrow.lhead { background: var(--color-surface-sunken,#ECEEF2); font-size: 10px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-600,#454C58); }
+  .lrow input { border-color: transparent; background: transparent; padding: 6px 7px; font-size: 13px; border-radius: 6px; }
+  .lrow input:hover { border-color: var(--color-border,#CDD2DB); background: #fff; }
+  .lrow input:focus { background: #fff; }
+  .lrow .delta { font-family: var(--font-mono); font-size: 12.5px; text-align: right; font-variant-numeric: tabular-nums; }
+  .lrow .delta.neg { color: var(--green-700,#166B46); }
+  .lrow .delta.pos { color: var(--red-600,#BE3A30); }
+  .lrow .xc { text-align: center; }
+  .lrow .lab-m { display: none; }
+  .ltogs { display: flex; gap: 4px; margin-top: 3px; padding: 0 7px; }
+  .ltoggle { font-size: 9px; font-weight: 700; letter-spacing: .02em; padding: 1px 5px; border-radius: 4px;
+    border: 1px solid var(--color-border,#CDD2DB); background: #fff; color: var(--ink-400,#7C8492); cursor: pointer; }
+  .ltoggle.on { background: var(--orange-500,#F47735); border-color: var(--orange-500,#F47735); color: #fff; }
+  .lchips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 7px 0; }
+  .lchip { display: inline-flex; align-items: center; font-size: 9.5px; font-weight: 700; line-height: 1.3;
+    padding: 1px 6px; border-radius: 4px; border: 1px solid; }
+  .lchip.err { background: var(--red-100,#FBE9E7); color: var(--red-700,#98271F); border-color: var(--red-200,#f3c9c4); }
+  .lchip.increase { background: var(--amber-100,#FAF0D9); color: var(--amber-700,#8A610C); border-color: #ecdba8; }
+  .lchip.saving { background: var(--green-100,#E6F3EC); color: var(--green-700,#166B46); border-color: #bfe3cf; }
+  .ltotal { display: flex; justify-content: flex-end; gap: 26px; padding: 10px 14px;
+    background: var(--ink-25,#FAFBFC); border-top: 1px solid var(--color-divider,#DFE3E9);
+    font-family: var(--font-mono); font-size: 13px; flex-wrap: wrap; }
+  .ltotal b { font-weight: 600; }
+
+  details.src { border: 1px solid var(--color-border,#CDD2DB); border-radius: 10px; background: #fff;
+    padding: 0; margin-bottom: 10px; }
+  details.src summary { cursor: pointer; padding: 11px 14px; font-weight: 600; font-size: 13px; }
+  details.src pre { margin: 0; padding: 12px 14px; border-top: 1px solid var(--color-divider,#DFE3E9);
+    max-height: 260px; overflow: auto; font-family: var(--font-mono); font-size: 11px;
+    white-space: pre-wrap; word-break: break-word; background: var(--ink-25,#FAFBFC); }
+
+  .placeholder-screen { text-align: center; padding: 60px 20px; color: var(--color-text-muted,#5E6675); }
+  .placeholder-screen h2 { font-size: 20px; color: var(--color-text,#14161B); }
+
+  /* ---- Report ---- */
+  .sheet { background: #fff; border: 1px solid var(--color-border,#CDD2DB); border-radius: 4px;
+    max-width: 800px; margin: 0 auto; padding: 0; overflow: hidden; }
+  .sheet-mast { background: var(--ink-950,#0B0C0F); color: #fff; padding: 22px 30px;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .sheet-mast img { height: 24px; }
+  .sheet-mast .doc { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink-300,#A8AFBC); text-align: right; }
+  .sheet-b { padding: 26px 30px 34px; }
+  .sheet h2.rt { font-size: 22px; margin: 0 0 2px; }
+  .sheet .rsub { font-size: 12px; color: var(--color-text-muted,#5E6675); margin-bottom: 22px; }
+  .rtable { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0 4px; }
+  .rtable th { text-align: left; font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-600,#454C58); background: var(--ink-100,#ECEEF2); padding: 7px 9px;
+    border: 1px solid var(--ink-150,#DFE3E9); }
+  .rtable td { padding: 7px 9px; border: 1px solid var(--ink-150,#DFE3E9); vertical-align: top; }
+  .rtable td.r, .rtable th.r { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rtable tr.tot td { background: var(--ink-25,#FAFBFC); font-weight: 700; }
+  .rneg { color: var(--green-700,#166B46); } .rpos { color: var(--red-600,#BE3A30); }
+  .sheet h3 { font-size: 13px; margin: 24px 0 4px; }
+  .sheet .badv { margin: 6px 0 0; padding-left: 18px; font-size: 11.5px; color: var(--ink-700,#2F343D); }
+  .sheet .badv li { margin-bottom: 3px; }
+  .sig { margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--ink-150,#DFE3E9);
+    display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; font-size: 11.5px; }
+  .sig .who b { display: block; font-size: 13px; }
+  .sig .who span { color: var(--color-text-muted,#5E6675); }
+  .fineprint { margin-top: 14px; font-size: 9.5px; color: var(--ink-400,#7C8492); line-height: 1.5; }
+
+  /* ---- Responsive: full parity ---- */
+  @media (max-width: 860px) {
+    .bmeta, .qmeta { grid-template-columns: 1fr 1fr; }
+    .rollup { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    h1 { font-size: 24px; }
+    .grid3 { grid-template-columns: 1fr; }
+    .panels { grid-template-columns: 1fr; }
+    .steps { order: 3; width: 100%; }
+    .masthead { gap: 10px; }
+    .bmeta, .qmeta { grid-template-columns: 1fr; }
+    /* line rows become stacked cards with labels */
+    .lrow { grid-template-columns: 1fr 1fr; padding: 8px 6px; gap: 2px 8px; }
+    .lrow.lhead { display: none; }
+    .lrow > div { padding: 3px 6px; }
+    .lrow .c-sec { grid-column: 1 / -1; }
+    .lrow .lab-m { display: block; font-size: 9px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--ink-400,#7C8492); margin-bottom: 1px; }
+    .lrow .xc { grid-column: 2; text-align: right; }
+  }
+
+  /* ---- Print: the report sheet only ---- */
+  @media print {
+    @page { size: A4; margin: 10mm; }
+    body { background: #fff; }
+    .masthead, .bar, .no-print, .eyebrow, h1.pg, .lede { display: none !important; }
+    main { padding: 0; max-width: none; }
+    .sheet { border: none; max-width: none; border-radius: 0; }
+    * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .rtable, .sheet h3, .rsummary, .rnote { break-inside: avoid; }
+  }
+
+  /* Report headline summary + rationale */
+  .rsummary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 4px 0 20px; }
+  .rfig { border: 1px solid var(--ink-150,#DFE3E9); border-radius: 6px; padding: 11px 13px; }
+  .rfig .l { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-500,#5E6675); }
+  .rfig .v { font-family: var(--font-mono); font-size: 19px; font-weight: 600; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .rfig .s { font-size: 10.5px; color: var(--ink-500,#5E6675); margin-top: 2px; }
+  .rnote { border-left: 3px solid var(--orange-500,#F47735); background: var(--orange-50,#FEF4EC);
+    padding: 12px 15px; border-radius: 0 6px 6px 0; margin: 0 0 22px; }
+  .rnote h3 { margin: 0 0 5px; font-size: 12px; }
+  .rnote p { margin: 0 0 6px; font-size: 11.5px; line-height: 1.55; color: var(--ink-800,#1E222A); }
+  .rnote ul { margin: 6px 0 0; padding-left: 18px; font-size: 11.5px; color: var(--ink-800,#1E222A); }
+  .rnote li { margin-bottom: 3px; }
+  @media (max-width: 640px) { .rsummary { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand">
+      <img src="assets/logos/cartrack-insurance-horizontal-white.png" alt="Cartrack Insurance"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <div class="name" style="display:none">CARTRACK<small>INSURANCE</small></div>
+    </div>
+    <nav class="steps" id="steps"></nav>
+    <div class="spacer"></div>
+    <div class="rm">
+      <div class="av" id="rmAv">H</div>
+      <div>
+        <select id="rmSelect" aria-label="Relationship Manager"></select>
+        <div class="role" id="rmRole">Commercial RM</div>
+      </div>
+    </div>
+  </header>
+
+  <main id="app"><!-- rendered by JS --></main>
+
+<!-- Local, in-browser extraction libraries (no server; files never leave the device) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script type="module">
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
+
+/* ============================================================
+   Cartrack Premium Comparison — skeleton (iteration 2)
+   Device-only: all state persists to localStorage. No backend.
+   Upload → local extraction → seeded, editable Review → Report.
+   ============================================================ */
+
+const RMS = [
+  { id: 'hein', name: 'Hein', initials: 'H', role: 'Commercial RM' },
+  { id: 'jean', name: 'Jean', initials: 'J', role: 'Commercial RM' },
+  { id: 'elizabeth', name: 'Elizabeth', initials: 'E', role: 'Commercial RM' },
+  { id: 'bronwyn', name: 'Bronwyn', initials: 'BR', role: 'Commercial RM' },
+  { id: 'bernard', name: 'Bernard', initials: 'BE', role: 'Commercial RM' },
+  { id: 'cules', name: 'Cules', initials: 'C', role: 'Commercial RM' },
+  { id: 'phillip', name: 'Phillip', initials: 'P', role: 'Commercial RM' },
+  { id: 'house', name: 'Cartrack (House)', initials: 'CT', role: 'House account' },
+];
+const STEPS = [
+  { id: 'upload', label: 'Upload' },
+  { id: 'review', label: 'Review' },
+  { id: 'report', label: 'Client report' },
+];
+const INSURERS = ['Santam','Western','Bryte','AIG','Hollard','Old Mutual Insure','Discovery Insure',
+  'Momentum','Auto & General','King Price','OUTsurance','Renasa','Lombard','Infiniti','GENRIC','Guardrisk'];
+const COMMON_SECTIONS = ['Buildings Combined','Business All Risks','Accidental Damage','Power Surge',
+  'Electronic Equipment','Glass','Public Liability','Commercial Umbrella Liability','Money',
+  'Geyser Replacement','Fidelity Guarantee','SASRIA','Broker & assist fees'];
+
+const STORE_KEY = 'ct-compare-v1';
+const blank = () => ({
+  rmId: 'hein', step: 'upload',
+  client: { name: '', type: 'Portfolio — multiple buildings', renewal: '' },
+  files: { schedule: [], quote: [] }, // {id,name,size,kind,status,text,chars,error}
+  seeded: false,
+  buildings: [],  // {id,name,entity,addr,si,selQ}
+  quotes: [],     // {id,buildingId,insurer,quoteNo,note,advisories, lines:[{id,s,curL,cur,propL,prop,curStr,propStr}]}
+});
+
+let state = load();
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (!s || !s.files) return blank();
+    s.buildings ||= []; s.quotes ||= []; s.seeded ||= false;
+    return s;
+  } catch { return blank(); }
+}
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} }
+
+const $ = (s, r=document) => r.querySelector(s);
+const el = (tag, props={}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') n.className = v;
+    else if (k === 'html') n.innerHTML = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (v !== false && v != null) n.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c != null) n.append(c.nodeType ? c : document.createTextNode(c));
+  return n;
+};
+const uid = () => Math.random().toString(36).slice(2, 9);
+const fmtSize = b => b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(0)+' KB' : (b/1048576).toFixed(1)+' MB';
+
+/* ---------- money ---------- */
+function parseMoney(v) {
+  if (v == null || v === '') return null;
+  const s = String(v).replace(/[Rr]\s?/,'').replace(/\s/g,'').replace(/,(?=\d{3}\b)/g,'').replace(',','.');
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : null;
+}
+function fmtR(n, sign=false) {
+  if (n == null || !Number.isFinite(n)) return '—';
+  const neg = n < 0; const a = Math.abs(n);
+  const s = a.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return (neg ? '− ' : (sign && n > 0 ? '+ ' : '')) + 'R ' + s;
+}
+
+/* ---------- comparison math (mirror of the data contract) ---------- */
+// Parse a cover limit / sum insured into a number: "R 38.72M" -> 38720000,
+// "R 250 000" -> 250000. Text limits (Included / Statutory / Full value) -> null.
+function parseLimit(str) {
+  if (str == null) return null;
+  const s = String(str).trim();
+  if (!s || /included|statutory|full\s*value|not\s*quoted|—|^-$/i.test(s)) return null;
+  const m = /([\d][\d\s.,]*)\s*([MmKk])?/.exec(s.replace(/[Rr]/g, ''));
+  if (!m) return null;
+  let n = parseFloat(m[1].replace(/\s/g, '').replace(/,(?=\d{3}\b)/g, ''));
+  if (!Number.isFinite(n)) return null;
+  if (m[2]) n *= /[Mm]/.test(m[2]) ? 1e6 : 1e3;
+  return n;
+}
+function lineStatus(l) {
+  if (l.propNq) return { delta: null, st: 'gap' };   // Cartrack didn't quote -> real gap
+  const cur = l.cur, prop = l.prop;
+  // Cartrack quoted where the current insurer gave no cover -> new cover won, not a gap.
+  if (cur == null && prop != null) return { delta: null, st: 'added' };
+  if (prop == null || cur == null) return { delta: null, st: 'gap' };
+  const d = +(prop - cur).toFixed(2);
+  return { delta: d, st: d < 0 ? 'saving' : d > 0 ? 'increase' : 'matched' };
+}
+// Per-line cover flags (from comparison-engine): a limit reduction and a
+// coverage gap are advisory points even when the premium looks favourable.
+function lineFlags(l) {
+  const flags = [];
+  const curHasCover = l.cur != null || l.curIncl || parseLimit(l.curL) != null;
+  if (l.propNq) {
+    flags.push({ kind: 'gap', text: curHasCover ? 'Not quoted — cover falls away' : 'Not quoted' });
+    return flags;
+  }
+  const cl = parseLimit(l.curL), pl = parseLimit(l.propL);
+  if (cl != null && pl != null && cl - pl > 0.5)
+    flags.push({ kind: 'limit', text: 'Limit reduced by ' + fmtLimit(cl - pl) });
+  return flags;
+}
+function quoteTotals(q) {
+  let cur = 0, prop = 0, comparable = 0, gaps = 0, added = 0;
+  for (const l of q.lines) {
+    const { st } = lineStatus(l);
+    if (l.cur != null) cur += l.cur;
+    if (l.prop != null) prop += l.prop;
+    if (st === 'gap') gaps++;            // current covered, Cartrack didn't quote
+    else if (st === 'added') added++;    // Cartrack added cover the client didn't have
+    else comparable++;
+  }
+  return { cur: +cur.toFixed(2), prop: +prop.toFixed(2), delta: +(prop-cur).toFixed(2), comparable, gaps, added };
+}
+const quotesOf = b => state.quotes.filter(q => q.buildingId === b.id);
+function selQuote(b) {
+  const qs = quotesOf(b);
+  return qs.find(q => q.id === b.selQ) || qs[0] || null;
+}
+function portfolio() {
+  let cur = 0, prop = 0, n = 0;
+  for (const b of state.buildings) {
+    const q = selQuote(b); if (!q || !q.lines.length) continue;
+    const t = quoteTotals(q); cur += t.cur; prop += t.prop; n++;
+  }
+  return { cur: +cur.toFixed(2), prop: +prop.toFixed(2), delta: +(prop-cur).toFixed(2), n };
+}
+
+/* ---------- Local extraction ---------- */
+async function extractText(file) {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.pdf')) {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let out = '';
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const tc = await page.getTextContent();
+      out += tc.items.map(i => i.str).join(' ') + '\n';
+    }
+    return { text: out.trim(), sheets: null };
+  }
+  if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    // Sheet names are captured here, from the workbook itself — never from the
+    // (possibly truncated) text — so every building tab is always detected.
+    // Each sheet's text is capped individually so all tabs stay represented.
+    const text = wb.SheetNames.map(sn =>
+      '### ' + sn + '\n' + XLSX.utils.sheet_to_csv(wb.Sheets[sn]).slice(0, 35000)).join('\n\n').trim();
+    return { text, sheets: [...wb.SheetNames] };
+  }
+  throw new Error('Unsupported file type');
+}
+async function addFiles(panel, fileList) {
+  for (const f of fileList) {
+    const rec = { id: uid(), name: f.name, size: f.size, status: 'busy', text: '', error: '',
+      kind: /\.xlsx?$/i.test(f.name) ? 'XLSX' : 'PDF' };
+    if (f.size > 20 * 1048576) { rec.status = 'err'; rec.error = 'Over 20 MB limit'; }
+    if (state.files[panel].length >= 20) { alert('Maximum 20 files per panel.'); break; }
+    state.files[panel].push(rec); state.seeded = false; save(); render();
+    if (rec.status === 'err') continue;
+    try {
+      const { text, sheets } = await extractText(f);
+      rec.text = text.slice(0, 200000); // keep localStorage sane
+      rec.chars = text.length;
+      rec.sheets = sheets;              // authoritative building-tab list (XLSX)
+      rec.status = 'ok';
+    } catch (e) { rec.status = 'err'; rec.error = (e && e.message) || 'Could not read file'; }
+    save(); render();
+  }
+}
+function removeFile(panel, id) {
+  state.files[panel] = state.files[panel].filter(f => f.id !== id);
+  state.seeded = false; save(); render();
+}
+
+/* ---------- Seeding: extracted text → editable structure ---------- */
+function cleanName(fn) { return fn.replace(/\.(pdf|xlsx?|xls)$/i,'').replace(/[_-]+/g,' ').trim(); }
+const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function guessQuoteNo(text, fname) {
+  // Explicit "quote number" label wins; then a 7–9 digit run in the filename
+  // (e.g. "Proposal - 48517097 (R7,874.57).pdf"); then other labelled refs.
+  // Never fall back to bare digit runs — those match VAT/Reg numbers.
+  let m = /quote\s*(?:number|no\.?|#)?\s*[:#]?\s*(\d{5,12})/i.exec(text || '');
+  if (m) return m[1];
+  m = /(\d{7,9})/.exec(fname || ''); if (m) return m[1];
+  m = /(?:quotation|proposal|ref(?:erence)?)\s*(?:number|no\.?)?\s*[:#]?\s*(\d{5,12})/i.exec(text || '');
+  return m ? m[1] : '';
+}
+function guessInsurer(text, fname) {
+  const hay = (fname + ' ' + (text || '')); // scan the full text, not a prefix
+  for (const ins of INSURERS) if (new RegExp('\\b' + esc(ins) + '\\b','i').test(hay)) return ins;
+  return '';
+}
+// The quotes panel holds Cartrack proposals, so the proposed insurer is
+// Cartrack — with the underwriter appended when one is detected.
+function proposedInsurer(text, fname) {
+  const u = guessInsurer(text, fname);
+  return u && !/cartrack/i.test(u) ? 'Cartrack · ' + u : 'Cartrack';
+}
+/* Building name from a schedule filename: strip leading dates, insurer and
+   document words — "2026-03-01 Brett Park Office Park Bryte Renewal Policy
+   Schedule.pdf" → "Brett Park Office Park". Lets the two-PDFs-per-building
+   pattern (e.g. Bryte + AIG XOL) dedupe into one building. */
+const DOC_WORDS = /\b(renewal|policy|schedule|proposal|quote|quotation|umbrella|liability|xol|commercial)\b/gi;
+function buildingNameFromFile(fname) {
+  let n = cleanName(fname);
+  n = n.replace(/^\s*\d{4}[ .\/-]\d{1,2}[ .\/-]\d{1,2}\s*/, '');
+  n = n.replace(new RegExp('\\b(' + INSURERS.map(esc).join('|') + ')\\b', 'gi'), '');
+  n = n.replace(DOC_WORDS, '').replace(/\s{2,}/g, ' ').trim();
+  return n || cleanName(fname);
+}
+/* When the filename is an opaque code (OT106190151…, BUILDINGMAINTENANCE0521),
+   pull the name from inside the document: the insured-name block first, the
+   risk address as fallback. */
+function buildingNameFromText(text) {
+  // PDF text arrives without line breaks, so the captured chunk is cut at a
+  // natural entity suffix (Body Corporate, HOA, (Pty) Ltd) or a stop word.
+  let m = /(?:policy\s*holder|the insured|insured name|name of insured)\s*[:\-]?\s+([^\n]{4,90})/i.exec(text || '');
+  let raw = m ? m[1] : '';
+  if (!raw) {
+    m = /(?:risk address|situation address|situated at)\s*[:\-]?\s+([^\n]{4,90})/i.exec(text || '');
+    raw = m ? m[1] : '';
+  }
+  if (!raw) return '';
+  raw = raw.replace(/\s{2,}/g, ' ').trim();
+  const suffix = /^(.*?\b(?:body corporate|home\s?owners association|hoa|\(pty\) ltd|proprietary limited|cc))\b/i.exec(raw);
+  if (suffix) return suffix[1].trim();
+  const stop = raw.search(/\b(for attention|attention|vat|physical|postal|suburb|town|province|company|registration|reg no|address)\b/i);
+  if (stop > 3) return raw.slice(0, stop).trim();
+  return raw.split(/\s+/).slice(0, 6).join(' ');
+}
+function looksLikeCode(name) {
+  return name.split(/\s+/).length < 2 || /\d{5,}/.test(name);
+}
+
+/* ---------- figure pre-fill: parse premiums out of the documents ---------- */
+const titleCase = s => s.toLowerCase().replace(/(^|[\s(\/&-])([a-z])/g, (m,a,b) => a + b.toUpperCase()).replace(/\bSasria\b/i,'SASRIA');
+const fmtLimit = n => n == null ? '' : n >= 1e6 ? 'R ' + (n/1e6).toFixed(2) + 'M' : 'R ' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+/* Proposal (quote PDF): "SUMMARY OF COVER … DESCRIPTION MONTHLY PREMIUM
+   BUILDINGS COMBINED R1 876,23 … TOTAL PREMIUM: R7 874,57".
+   SASRIA sub-rows are summed into one SASRIA line; ASSIST becomes fees. */
+function parseProposalProp(text) {
+  const start = /SUMMARY OF COVER/i.exec(text || '');
+  if (!start) return { rows: [], total: null };
+  const endM = /TOTAL PREMIUM\s*:?\s*R([\d ]+(?:,\d{2})?)/i.exec(text.slice(start.index));
+  const region = text.slice(start.index, endM ? start.index + endM.index : start.index + 4000);
+  const rows = []; const zeroSections = []; let sasria = 0, fees = 0;
+  for (const m of region.matchAll(/([A-Z][A-Z &\/'()\-]{2,40}?)\s+R([\d ]+(?:,\d{2})?)/g)) {
+    // Rows can arrive glued to preceding header text. Column gaps are runs of
+    // 2+ spaces while names use single spaces — the name is the last segment.
+    const name = m[1].trim().split(/\s{2,}/).pop().trim();
+    if (!name || /SUMMARY|TOTAL|DESCRIPTION|COMMISSION|VAT/i.test(name)) continue;
+    const amt = parseMoney(m[2]);
+    if (amt == null) continue;
+    if (amt === 0) { zeroSections.push(titleCase(name)); continue; } // listed at R0,00 = included at no premium
+    if (/SASRIA/i.test(name)) { sasria += amt; continue; }
+    if (/^ASSIST/i.test(name)) { fees += amt; continue; }
+    rows.push({ s: titleCase(name), amt });
+  }
+  if (sasria) rows.push({ s: 'SASRIA', amt: +sasria.toFixed(2) });
+  if (fees) rows.push({ s: 'Broker & assist fees', amt: +fees.toFixed(2) });
+  return { rows, zeroSections, total: endM ? parseMoney(endM[1]) : null };
+}
+
+/* OUTsurance summary: "Fire* Yes R1,079.95 Buildings combined* Yes R6,343.71
+   Office contents No Theft Yes R537.62 …" — each section is name + Yes/No +
+   (premium when Yes). Plus a stated SASRIA and total. */
+function parseScheduleOUT(text) {
+  const start = /Fire\*?\s+(?:Yes|No)\b/i.exec(text || '');
+  if (!start) return null;
+  const region = text.slice(start.index, start.index + 2000);
+  const rows = [];
+  for (const m of region.matchAll(/([A-Za-z][A-Za-z ()\-\/&]*?)\*?\s+(Yes|No)\b(?:\s+R([\d,]+\.\d{2}))?/g)) {
+    if (!/yes/i.test(m[2]) || !m[3]) continue;                 // only sections held, with a premium
+    const name = m[1].replace(/^[a-z]+\s+/, '').trim();        // strip leading word fragment (e.g. "ium ")
+    const amt = parseMoney(m[3]);
+    if (!name || amt == null) continue;
+    rows.push({ s: titleCase(name), amt, si: null });
+  }
+  let m = /SASRIA premium\s+R([\d,]+\.\d{2})/i.exec(text);
+  if (m && parseMoney(m[1])) rows.push({ s: 'SASRIA', amt: parseMoney(m[1]) });
+  m = /Total premium\s*\(Including VAT\)\s+R([\d,]+\.\d{2})/i.exec(text);
+  return { rows, total: m ? parseMoney(m[1]) : null };
+}
+/* Schedule (e.g. Bryte): "PREMIUM SCHEDULE AND INDEX OF COVER … BUILDINGS
+   COMBINED NO YES 2 351.10 R R - R 2 38 717 000 …", then Sasria / fees /
+   additional-services and a stated TOTAL. Dispatches to OUTsurance when the
+   Bryte-style index is absent. */
+function parseScheduleCur(text) {
+  const start = /PREMIUM SCHEDULE AND INDEX OF COVER/i.exec(text || '');
+  if (!start) return parseScheduleOUT(text) || { rows: [], total: null };
+  const region = text.slice(start.index, start.index + 6000);
+  const rows = [];
+  for (const m of region.matchAll(/([A-Z][A-Z &\/'()\-]{2,40}?)\s+(?:NO|YES)\s+YES\s+([\d ]+\.\d{2})(?:\s+R\s+R\s+-\s+R\s+\d+\s+([\d ]{3,15}?)(?=\s+[A-Z]))?/g)) {
+    const name = m[1].trim();
+    if (/SECTION|PREMIUM|TOTAL/i.test(name)) continue;
+    const amt = parseMoney(m[2]);
+    if (amt == null || amt === 0) continue;
+    rows.push({ s: titleCase(name), amt, si: m[3] ? parseMoney(m[3]) : null });
+  }
+  let m = /Sasria\s*-\s*([\d ]+\.\d{2})/i.exec(region);
+  if (m) rows.push({ s: 'SASRIA', amt: parseMoney(m[1]) });
+  m = /([\d ]+\.\d{2})\s+Total Fees/i.exec(region);
+  if (m && parseMoney(m[1])) rows.push({ s: 'Broker & assist fees', amt: parseMoney(m[1]) });
+  m = /Additional Services[^\d]{0,40}?([\d ]+\.\d{2})/i.exec(region);
+  if (m && parseMoney(m[1])) rows.push({ s: 'Additional services', amt: parseMoney(m[1]) });
+  m = /TOTAL\s*-\s*([\d ]+\.\d{2})/.exec(region);
+  return { rows, total: m ? parseMoney(m[1]) : null };
+}
+
+/* Merge current (schedules) and proposed (proposal) rows into comparison
+   lines, keyed by normalised section name. Sections on only one side become
+   visible gaps rather than disappearing. */
+// Canonical cover-section name so equivalent sections from a schedule and a
+// Cartrack quote merge into one comparison line instead of a false gap +
+// false "now covered". Alias patterns run first; anything unmatched falls back
+// to a cleaned token key.
+const SECTION_ALIASES = [
+  { canon: 'UMBRELLA LIABILITY', re: /umbrella/i },
+  { canon: 'PUBLIC LIABILITY', re: /public liability|general liability/i },
+  { canon: 'EMPLOYERS LIABILITY', re: /employ/i },
+  { canon: 'BUILDINGS COMBINED', re: /buildings?\b/i },
+  { canon: 'BUSINESS ALL RISKS', re: /all risks?|business all risk/i },
+  { canon: 'ACCIDENTAL DAMAGE', re: /accidental/i },
+  { canon: 'ELECTRONIC EQUIPMENT', re: /electronic/i },
+  { canon: 'FIDELITY GUARANTEE', re: /fidelity/i },
+  { canon: 'BUSINESS INTERRUPTION', re: /interruption/i },
+  { canon: 'MACHINERY BREAKDOWN', re: /machinery/i },
+  { canon: 'GOODS IN TRANSIT', re: /transit/i },
+  { canon: 'OFFICE CONTENTS', re: /office contents|contents/i },
+  { canon: 'POWER SURGE', re: /power surge/i },
+  { canon: 'GEYSER', re: /geyser/i },
+  { canon: 'GLASS', re: /\bglass\b/i },
+  { canon: 'MONEY', re: /\bmoney\b/i },
+  { canon: 'THEFT', re: /\btheft\b/i },
+  { canon: 'GROUP PERSONAL ACCIDENT', re: /group personal accident|personal accident/i },
+  { canon: 'TRUSTEES LIABILITY', re: /trustees?/i },
+  { canon: 'BROKER & ASSIST FEES', re: /broker|assist|policy fee|admin fee|sundry/i },
+  { canon: 'ADDITIONAL SERVICES', re: /additional services?/i },
+  { canon: 'SASRIA', re: /sasria/i },
+];
+function canonSection(name) {
+  const raw = String(name || '').trim();
+  for (const a of SECTION_ALIASES) if (a.re.test(raw)) return a.canon;
+  return raw.toUpperCase().replace(/\b(COMMERCIAL|POLICY|SECTION|COVER|INSURANCE)\b/g, '')
+    .replace(/[^A-Z0-9]+/g, ' ').trim();
+}
+// Fold lines within one quote that resolve to the same canonical section
+// (e.g. current "Commercial Umbrella Liability" + proposed "Umbrella Policy").
+function mergeDuplicateSections(q) {
+  const byKey = new Map(); const out = [];
+  for (const l of q.lines) {
+    const k = canonSection(l.s);
+    const e = byKey.get(k);
+    if (!e) { byKey.set(k, l); out.push(l); continue; }
+    if (e.cur == null && !e.curIncl && l.cur != null) {
+      e.cur = l.cur; e.curL = e.curL || l.curL; e.curIncl = l.curIncl; e.curStr = e.curStr === '—' ? (l.curStr || '') : e.curStr;
+    }
+    if (e.prop == null && !e.propIncl && !e.propNq && (l.prop != null || l.propIncl || l.propNq)) {
+      e.prop = l.prop; e.propL = e.propL || l.propL; e.propIncl = l.propIncl; e.propNq = l.propNq; e.propStr = l.propNq ? 'Not quoted' : '';
+    }
+  }
+  q.lines = out;
+}
+// Fill current-side figures into an existing quote's lines without touching
+// the proposed side or any current value the RM already entered.
+function backfillCurrent(q, curRows) {
+  if (!curRows || !curRows.length) return;
+  const byKey = new Map(q.lines.map(l => [canonSection(l.s), l]));
+  for (const r of curRows) {
+    const k = canonSection(r.s);
+    const e = byKey.get(k);
+    if (e) {
+      if (e.cur == null && !e.curIncl) { e.cur = r.amt; if (r.si && !e.curL) e.curL = fmtLimit(r.si); if (e.curStr === '—') e.curStr = ''; }
+    } else {
+      const nl = { ...newLine(r.s), cur: r.amt, curL: r.si ? fmtLimit(r.si) : '' };
+      q.lines.push(nl); byKey.set(k, nl);
+    }
+  }
+}
+function buildComparisonLines(curRows, prop) {
+  const key = canonSection;
+  const map = new Map();
+  for (const r of curRows) {
+    const k = key(r.s);
+    const e = map.get(k) || { ...newLine(r.s), cur: 0 };
+    e.cur = +((e.cur || 0) + r.amt).toFixed(2);
+    if (r.si && !e.curL) e.curL = fmtLimit(r.si);
+    map.set(k, e);
+  }
+  for (const r of prop.rows) {
+    const k = key(r.s);
+    const e = map.get(k);
+    if (e) e.prop = +((e.prop || 0) + r.amt).toFixed(2);
+    else map.set(k, { ...newLine(r.s), prop: r.amt, curStr: '—' });
+  }
+  // Sections the proposal lists at R0,00: included at no premium — a real
+  // comparison point (saving) when the current policy charges for them.
+  const zeroKeys = new Set((prop.zeroSections || []).map(key));
+  for (const e of map.values()) {
+    if (e.cur != null && e.prop == null) {
+      if (zeroKeys.has(key(e.s))) { e.prop = 0; e.propL = 'Included'; }
+      else e.propStr = 'Not quoted';
+    }
+  }
+  return [...map.values()];
+}
+function riskAddressFromText(text) {
+  const m = /risk address\s*[:\-]?\s+([^\n]{6,70}?)(?:\s+Page\b|\s{3,}|\n|$)/i.exec(text || '');
+  return m ? m[1].replace(/\s{2,}/g,' ').trim() : '';
+}
+/* Score a quote's text+filename against each building name. Generic property
+   words don't count; distinctive words score 2; a house/stand number that
+   appears as a whole word scores 3 (disambiguates 43 vs 39 Empire Road). */
+const GENERIC_WORDS = new Set(['body','corporate','homeowners','association','office','park','road','lane','street','drive','the','and','court','estate']);
+function scoreBuilding(b, s, allowNumbers) {
+  let sc = 0;
+  for (const w of (b.name || '').toLowerCase().split(/\s+/)) {
+    if (!w || GENERIC_WORDS.has(w)) continue;
+    if (/^\d{2,4}$/.test(w)) {
+      // Street/stand numbers only count in focus windows — in full text they
+      // collide with page numbers and totals.
+      if (allowNumbers && new RegExp('\\b' + w + '\\b').test(s)) sc += 3;
+    }
+    else if (/^\d/.test(w)) continue;               // lone digits / codes: too weak to score
+    else if (w.length >= 3 && s.includes(w)) sc += 2;
+  }
+  return sc;
+}
+function matchBuilding(hayRaw) {
+  const hay = hayRaw.toLowerCase();
+  // Every proposal repeats the broker's own header address, which can point at
+  // the wrong building — so text near risk-address and policyholder markers is
+  // what gets scored heavily (and is the only place numbers count).
+  let focus = '';
+  for (const m of hay.matchAll(/risk address|situation address|premises|property insured|situated at|risk details|physical address of prop|policy\s*holder|the insured|insured name|name of insured/g)) {
+    focus += hay.slice(m.index, m.index + 400) + ' ';
+  }
+  let best = null, bs = 0;
+  for (const b of state.buildings) {
+    const s = (focus ? scoreBuilding(b, focus, true) * 3 : 0) + scoreBuilding(b, hay, false);
+    if (s > bs) { bs = s; best = b; }
+  }
+  return bs > 0 ? best : null;
+}
+function newLine(s='') { return { id: uid(), s, curL: '', cur: null, curStr: '', propL: '', prop: null, propStr: '', propNq: false, curIncl: false, propIncl: false }; }
+function newBuilding(name) { return { id: uid(), name: name || 'Building ' + (state.buildings.length+1), entity: '', addr: '', si: '', selQ: null }; }
+function newQuote(buildingId, insurer='', quoteNo='') {
+  return { id: uid(), buildingId, insurer, quoteNo, note: '', advisories: '', lines: [] };
+}
+function seedFromFiles() {
+  // Buildings: one per XLSX sheet, or one per distinct schedule-PDF building
+  // name (two schedules for the same building — e.g. Bryte + AIG — dedupe).
+  if (!state.buildings.length) {
+    const seen = new Set();
+    const addB = (name) => {
+      const key = name.toLowerCase().replace(/\s+/g, ' ').trim();
+      if (!key || seen.has(key)) return;
+      seen.add(key); state.buildings.push(newBuilding(name));
+    };
+    for (const f of state.files.schedule) {
+      if (f.status !== 'ok') continue;
+      if (f.kind === 'XLSX') {
+        // Prefer the workbook's own sheet list; fall back to text markers for
+        // files read before this field existed.
+        const sheets = f.sheets && f.sheets.length ? f.sheets
+          : [...(f.text.matchAll(/^### (.+)$/gm))].map(m => m[1].trim());
+        for (const s of sheets) addB(s);
+      } else {
+        let nm = buildingNameFromFile(f.name);
+        if (looksLikeCode(nm)) nm = buildingNameFromText(f.text) || nm;
+        addB(nm);
+      }
+    }
+    if (!state.buildings.length) state.buildings.push(newBuilding('Building 1'));
+  }
+  // Map each schedule file to its building (by derived name, else by match)
+  const normKey = s => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const schedByB = new Map();
+  for (const f of state.files.schedule) {
+    if (f.status !== 'ok' || f.kind === 'XLSX') continue;
+    let nm = buildingNameFromFile(f.name);
+    if (looksLikeCode(nm)) nm = buildingNameFromText(f.text) || nm;
+    const b = state.buildings.find(x => normKey(x.name) === normKey(nm))
+      || matchBuilding(nm + ' ' + (f.text || '').slice(0, 3000));
+    if (!b) continue;
+    if (!schedByB.has(b.id)) schedByB.set(b.id, []);
+    schedByB.get(b.id).push(f);
+  }
+  // Pre-fill building meta + current-side figures from its schedules
+  for (const b of state.buildings) {
+    const curRows = [];
+    for (const f of schedByB.get(b.id) || []) {
+      const parsed = parseScheduleCur(f.text);
+      curRows.push(...parsed.rows);
+      const bc = parsed.rows.find(r => /BUILDINGS/i.test(r.s) && r.si);
+      if (bc && !b.si) b.si = fmtLimit(bc.si);
+      if (!b.entity) { const e = buildingNameFromText(f.text); if (e && normKey(e) !== normKey(b.name)) b.entity = e; }
+    }
+    b.__curRows = curRows; // transient, used below
+  }
+  // Quotes: one per quote-panel file, scored against building names; lines
+  // pre-filled by merging schedule (current) and proposal (proposed) figures.
+  const existingBySrc = new Map(state.quotes.map(q => [q.srcId, q]));
+  for (const f of state.files.quote) {
+    if (f.status !== 'ok') continue;
+    const existing = existingBySrc.get(f.id);
+    // Rebrand a bare underwriter name (e.g. "Western") to Cartrack — even for
+    // quotes we otherwise leave alone; keep anything that already names Cartrack.
+    if (existing && (!existing.insurer || !/cartrack/i.test(existing.insurer)))
+      existing.insurer = proposedInsurer(f.text, f.name);
+    const bldExisting = existing ? state.buildings.find(x => x.id === existing.buildingId) : null;
+    if (existing && existing.lines.length) {
+      backfillCurrent(existing, (bldExisting && bldExisting.__curRows) || []);  // fill newly-parsed current figures
+      continue;                                          // keep RM-entered data otherwise
+    }
+    const bld = bldExisting || matchBuilding(f.name + ' ' + (f.text || '')) || state.buildings[0];
+    const prop = parseProposalProp(f.text);
+    const q = existing || newQuote(bld.id, proposedInsurer(f.text, f.name), guessQuoteNo(f.text, f.name));
+    q.lines = buildComparisonLines(bld.__curRows || [], prop);
+    q.totalStated = prop.total;
+    if (!bld.addr) { const a = riskAddressFromText(f.text); if (a) bld.addr = a; }
+    if (!existing) { q.srcId = f.id; state.quotes.push(q); }
+  }
+  for (const b of state.buildings) delete b.__curRows;
+  for (const q of state.quotes) mergeDuplicateSections(q);  // fold equivalent sections
+  state.seeded = true; save();
+}
+
+/* ---------- Header ---------- */
+function renderHeader() {
+  const stepsEl = $('#steps'); stepsEl.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    stepsEl.append(el('button', {
+      class: 'step', 'aria-current': String(state.step === s.id),
+      onClick: () => { go(s.id); },
+    }, el('span', { class: 'n' }, String(i+1).padStart(2,'0')), s.label));
+  });
+  const sel = $('#rmSelect'); sel.innerHTML = '';
+  RMS.forEach(r => sel.append(el('option', { value: r.id, selected: r.id === state.rmId }, r.name)));
+  sel.onchange = () => { state.rmId = sel.value; save(); syncRm(); if (state.step === 'report') render(); };
+  syncRm();
+}
+function syncRm() {
+  const rm = RMS.find(r => r.id === state.rmId) || RMS[0];
+  $('#rmAv').textContent = rm.initials; $('#rmRole').textContent = rm.role;
+}
+function go(step) {
+  if (step === 'review' && !state.seeded) seedFromFiles();
+  state.step = step; save(); render();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Screen: Upload ---------- */
+function panel(title, n, key, accept, hint) {
+  const files = state.files[key];
+  const input = el('input', { type: 'file', accept, multiple: true, style: 'display:none' });
+  input.onchange = () => { addFiles(key, [...input.files]); input.value = ''; };
+  const dz = el('div', { class: 'dropzone',
+    onClick: () => input.click(),
+    onDragover: e => { e.preventDefault(); dz.classList.add('drag'); },
+    onDragleave: () => dz.classList.remove('drag'),
+    onDrop: e => { e.preventDefault(); dz.classList.remove('drag'); addFiles(key, [...e.dataTransfer.files]); },
+  }, el('div', { class: 'big' }, hint), el('div', { class: 'sub' }, 'PDF or XLSX · up to 20 files · 20 MB each · tap to browse or scan'));
+  return el('div', { class: 'card' },
+    el('div', { class: 'card-h' }, el('h2', {}, el('span', { class: 'n' }, n), title),
+      el('span', { class: 'n' }, files.length + '/20')),
+    el('div', { class: 'card-b' },
+      files.map(f => el('div', { class: 'file' },
+        el('span', { class: 'kind ' + f.kind }, f.kind),
+        el('div', { class: 'meta' }, el('div', { class: 'nm' }, f.name),
+          el('div', { class: 'st' }, f.status === 'ok'
+            ? (fmtSize(f.size) + (f.sheets && f.sheets.length ? ' · ' + f.sheets.length + ' building tab' + (f.sheets.length===1?'':'s') + ' detected'
+               : ' · ' + (f.chars||0).toLocaleString() + ' chars read'))
+            : f.status === 'busy' ? 'Reading…' : (f.error || 'Error'))),
+        el('span', { class: 'pill ' + (f.status === 'ok' ? 'ok' : f.status === 'busy' ? 'busy' : 'err') },
+          f.status === 'ok' ? 'Read' : f.status === 'busy' ? 'Reading' : 'Failed'),
+        el('button', { class: 'x', title: 'Remove', onClick: () => removeFile(key, f.id) }, '×'),
+      )),
+      input, dz,
+    ),
+  );
+}
+function screenUpload() {
+  const c = state.client;
+  const bind = (k) => (e) => { c[k] = e.target.value; save(); };
+  const totalFiles = state.files.schedule.length + state.files.quote.length;
+  const allRead = [...state.files.schedule, ...state.files.quote].every(f => f.status !== 'busy');
+  return el('div', {},
+    el('div', { class: 'eyebrow' }, 'New comparison'),
+    el('h1', { class: 'pg' }, 'Upload schedules and quotes'),
+    el('p', { class: 'lede' }, "Attach the client's current policy schedules and the Cartrack proposed quotes. Files are read on this device — nothing is uploaded to a server. You can also skip straight to Review and enter everything by hand."),
+    el('div', { class: 'card' },
+      el('div', { class: 'card-h' }, el('h2', {}, 'Client details')),
+      el('div', { class: 'card-b' }, el('div', { class: 'grid3' },
+        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Client / group name'),
+          el('input', { value: c.name, placeholder: 'Client or group name', onInput: bind('name') })),
+        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Client type'),
+          (() => { const s = el('select', { class: 'inp', onChange: bind('type') });
+            ['Portfolio — multiple buildings', 'Single building', 'Commercial — other']
+              .forEach(o => s.append(el('option', { value: o, selected: o === c.type }, o))); return s; })()),
+        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Renewal date'),
+          el('input', { type: 'date', value: c.renewal, onInput: bind('renewal') })),
+      )),
+    ),
+    el('div', { class: 'panels', style: 'margin-top:20px' },
+      panel('Current policy schedules', '01', 'schedule', '.pdf,.xlsx,.xls,application/pdf', 'Drop schedules here — one per building, or a workbook'),
+      panel('Cartrack proposed quotes', '02', 'quote', '.pdf,application/pdf', 'Drop Cartrack proposed quotes here'),
+    ),
+    el('div', { class: 'note', style: 'margin-top:18px' }, el('span', { class: 'dot' }, '•'),
+      el('span', {}, 'Local reading pulls the text out of each file so it is at hand on the Review step; buildings and quotes are pre-created from what is found. Insurer layouts vary — you confirm and correct every figure before anything is compared.')),
+    el('div', { class: 'bar' }, el('div', { class: 'bar-in' },
+      el('button', { class: 'btn', onClick: () => { if (confirm('Clear this comparison and start over?')) { state = blank(); save(); render(); } } }, 'Reset'),
+      el('div', { style: 'flex:1' }),
+      el('span', { class: 'muted', style: 'font-size:12px' }, totalFiles + ' file' + (totalFiles===1?'':'s') + ' added'),
+      el('button', { class: 'btn primary', disabled: !allRead, onClick: () => go('review') }, 'Continue to review →'),
+    )),
+  );
+}
+
+/* ---------- Screen: Review ---------- */
+function moneyInput(obj, key, placeholder) {
+  const i = el('input', { class: 'sm money', value: obj[key] == null ? '' : obj[key].toFixed(2),
+    placeholder: placeholder || '—', inputmode: 'decimal' });
+  i.onchange = () => { obj[key] = parseMoney(i.value); save(); render(); };
+  return i;
+}
+function textInput(obj, key, placeholder, cls='sm') {
+  const i = el('input', { class: cls, value: obj[key] || '', placeholder: placeholder || '' });
+  i.oninput = () => { obj[key] = i.value; save(); };
+  i.onchange = () => render();
+  return i;
+}
+const FLAG_CLS = { gap: 'err', limit: 'increase', saving: 'saving', increase: 'increase' };
+function toggle(on, label, title, onClick) {
+  return el('button', { class: 'ltoggle' + (on ? ' on' : ''), title, type: 'button', onClick }, label);
+}
+function lineRow(q, l) {
+  const { delta, st } = lineStatus(l);
+  const flags = lineFlags(l);
+  // Included / not-quoted toggles that drive the per-line cover semantics.
+  const inclCur = () => { l.curIncl = !l.curIncl; l.cur = l.curIncl ? 0 : null; save(); render(); };
+  const inclProp = () => { l.propIncl = !l.propIncl; l.propNq = false; l.prop = l.propIncl ? 0 : null; l.propStr = ''; save(); render(); };
+  const nqProp = () => { l.propNq = !l.propNq; if (l.propNq) { l.propIncl = false; l.prop = null; l.propStr = 'Not quoted'; } else l.propStr = ''; save(); render(); };
+  return el('div', { class: 'lrow' },
+    el('div', { class: 'c-sec' }, el('div', { class: 'lab-m' }, 'Cover section'), textInput(l, 's', 'Cover section'),
+      flags.length ? el('div', { class: 'lchips' }, flags.map(f =>
+        el('span', { class: 'lchip ' + (FLAG_CLS[f.kind] || '') }, f.text))) : null),
+    el('div', {}, el('div', { class: 'lab-m' }, 'Current limit'), textInput(l, 'curL', 'R —'),
+      el('div', { class: 'ltogs' }, toggle(l.curIncl, 'Incl.', 'Premium included at no separate cost', inclCur))),
+    el('div', {}, el('div', { class: 'lab-m' }, 'Current R/m'), moneyInput(l, 'cur')),
+    el('div', {}, el('div', { class: 'lab-m' }, 'Proposed limit'), textInput(l, 'propL', 'R —'),
+      el('div', { class: 'ltogs' },
+        // like-for-like: carry the current cover across in one tap, then the RM
+        // only edits the sections the quote actually changes.
+        (l.curL && !l.propL && !l.propNq)
+          ? toggle(false, '= current', 'Copy the current limit (like-for-like)',
+              () => { l.propL = l.curL; save(); render(); })
+          : null,
+        toggle(l.propIncl, 'Incl.', 'Included at no separate premium', inclProp),
+        toggle(l.propNq, 'N/Q', 'Not quoted — cover falls away', nqProp))),
+    el('div', {}, el('div', { class: 'lab-m' }, 'Proposed R/m'), moneyInput(l, 'prop')),
+    el('div', { class: 'delta ' + (delta == null ? '' : delta < 0 ? 'neg' : delta > 0 ? 'pos' : '') },
+      el('div', { class: 'lab-m' }, 'Δ / month'), delta == null ? '—' : fmtR(delta, true)),
+    el('div', {}, el('div', { class: 'lab-m' }, 'Status'),
+      el('span', { class: 'pill ' + st }, st === 'gap' ? 'Not covered' : st === 'added' ? 'Now covered' : st[0].toUpperCase()+st.slice(1))),
+    el('div', { class: 'xc' }, el('button', { class: 'x', title: 'Remove line',
+      onClick: () => { q.lines = q.lines.filter(x => x.id !== l.id); save(); render(); } }, '×')),
+  );
+}
+function quoteBlock(b, q) {
+  const t = quoteTotals(q);
+  const bSel = el('select', { class: 'inp', style: 'padding:7px 9px;font-size:13px' });
+  state.buildings.forEach(x => bSel.append(el('option', { value: x.id, selected: x.id === q.buildingId }, x.name)));
+  bSel.onchange = () => { q.buildingId = bSel.value; save(); render(); };
+  return el('div', { style: 'margin-top:14px' },
+    el('div', { class: 'qmeta' },
+      el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Proposed insurer'), textInput(q, 'insurer', 'Cartrack · underwriter')),
+      el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Quote no'), textInput(q, 'quoteNo', '00000000', 'sm mono')),
+      el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Building'), bSel),
+      el('button', { class: 'btn sm ghost danger', onClick: () => {
+        if (confirm('Remove this quote?')) { state.quotes = state.quotes.filter(x => x.id !== q.id); save(); render(); } } }, 'Remove quote'),
+    ),
+    el('div', { class: 'lines' },
+      el('div', { class: 'lrow lhead' },
+        el('div', {}, 'Cover section'), el('div', {}, 'Current limit'), el('div', {}, 'Current R/m'),
+        el('div', {}, 'Proposed limit'), el('div', {}, 'Proposed R/m'), el('div', { style: 'text-align:right' }, 'Δ / month'),
+        el('div', {}, 'Status'), el('div', {})),
+      q.lines.map(l => lineRow(q, l)),
+      el('div', { class: 'ltotal' },
+        el('span', {}, 'Current ', el('b', {}, fmtR(t.cur))),
+        el('span', {}, 'Proposed ', el('b', {}, fmtR(t.prop))),
+        el('span', { class: t.delta < 0 ? 'rneg' : t.delta > 0 ? 'rpos' : '' }, 'Variance ', el('b', {}, fmtR(t.delta, true))),
+        t.added ? el('span', { class: 'rneg' }, t.added + ' now covered by Cartrack') : null,
+        t.gaps ? el('span', { class: 'rpos' }, t.gaps + ' gap' + (t.gaps>1?'s':'')) : null,
+        q.totalStated != null ? el('span', {
+          class: Math.abs(t.prop - q.totalStated) > 1 ? 'rpos' : 'rneg',
+          title: 'Total premium printed on the proposal document' },
+          Math.abs(t.prop - q.totalStated) > 1
+            ? '⚠ proposal states ' + fmtR(q.totalStated)
+            : '✓ matches proposal total') : null,
+      ),
+    ),
+    el('div', { style: 'display:flex;gap:8px;margin-top:10px;flex-wrap:wrap' },
+      el('button', { class: 'btn sm', onClick: () => { q.lines.push(newLine()); save(); render(); } }, '+ Add section'),
+      q.lines.length === 0 ? el('button', { class: 'btn sm', onClick: () => {
+        COMMON_SECTIONS.forEach(s => q.lines.push(newLine(s))); save(); render(); } }, '+ Add common sections') : null,
+    ),
+    el('div', { style: 'margin-top:12px' },
+      el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Advisories (one per line — appear on the report)'),
+        (() => { const t2 = el('textarea', { placeholder: 'e.g. Buildings limit reduces by R6.2M — confirm replacement value before accepting.' }, q.advisories || '');
+          t2.oninput = () => { q.advisories = t2.value; save(); }; return t2; })()),
+    ),
+  );
+}
+function buildingCard(b, idx) {
+  const qs = quotesOf(b);
+  const q = selQuote(b);
+  return el('div', { class: 'card' },
+    el('div', { class: 'card-h' },
+      el('h2', {}, el('span', { class: 'n' }, String(idx+1).padStart(2,'0')), b.name || 'Unnamed building'),
+      el('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' },
+        el('button', { class: 'btn sm', onClick: () => { const nq = newQuote(b.id); state.quotes.push(nq); b.selQ = nq.id; save(); render(); } }, '+ Add quote'),
+        el('button', { class: 'btn sm ghost danger', onClick: () => {
+          if (confirm('Remove this building and its quotes?')) {
+            state.quotes = state.quotes.filter(x => x.buildingId !== b.id);
+            state.buildings = state.buildings.filter(x => x.id !== b.id); save(); render(); } } }, 'Remove'),
+      )),
+    el('div', { class: 'card-b' },
+      el('div', { class: 'bmeta' },
+        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Building name'), textInput(b, 'name', 'Building name')),
+        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Insured entity'), textInput(b, 'entity', 'Entity')),
+        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Risk address'), textInput(b, 'addr', 'Address')),
+        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Sum insured'), textInput(b, 'si', 'R —')),
+      ),
+      qs.length > 1 ? el('div', { class: 'qtabs', style: 'margin-top:14px' },
+        qs.map(x => el('button', { class: 'qtab', 'aria-current': String(x.id === (q && q.id)),
+          onClick: () => { b.selQ = x.id; save(); render(); } },
+          (x.insurer || 'Quote') + (x.quoteNo ? ' · ' + x.quoteNo : '')))) : null,
+      q ? quoteBlock(b, q) : el('p', { class: 'muted', style: 'margin:14px 0 0' }, 'No quotes for this building yet — add one.'),
+    ),
+  );
+}
+function screenReview() {
+  const p = portfolio();
+  const okFiles = [...state.files.schedule, ...state.files.quote].filter(f => f.status === 'ok');
+  return el('div', {},
+    el('div', { class: 'eyebrow' }, 'Step 02'),
+    el('h1', { class: 'pg' }, 'Review and confirm'),
+    el('p', { class: 'lede' }, 'Buildings and quotes below were pre-created from your files — confirm every figure against the source documents, correct anything that is off, and fill in what could not be read. Totals, variances and status are computed as you type.'),
+    el('div', { class: 'rollup' },
+      el('div', { class: 'stat' }, el('div', { class: 'lab' }, 'Current monthly'),
+        el('div', { class: 'val' }, fmtR(p.cur)), el('div', { class: 'sub' }, p.n + ' building' + (p.n===1?'':'s') + ' with quotes')),
+      el('div', { class: 'stat' }, el('div', { class: 'lab' }, 'Proposed monthly'),
+        el('div', { class: 'val' }, fmtR(p.prop)), el('div', { class: 'sub' }, 'selected quote per building')),
+      el('div', { class: 'stat' }, el('div', { class: 'lab' }, 'Variance / month'),
+        el('div', { class: 'val', style: p.delta < 0 ? 'color:var(--green-700)' : p.delta > 0 ? 'color:var(--red-600)' : '' },
+          fmtR(p.delta, true)),
+        el('div', { class: 'sub' }, p.delta < 0 ? 'saves ' + fmtR(Math.abs(p.delta)*12) + ' / year' :
+          p.delta > 0 ? 'adds ' + fmtR(p.delta*12) + ' / year' : '—')),
+    ),
+    okFiles.length ? el('div', { style: 'margin-top:20px' },
+      el('div', { class: 'eyebrow', style: 'margin-bottom:8px' }, 'Source documents (read on this device)'),
+      okFiles.map(f => el('details', { class: 'src' },
+        el('summary', {}, f.name + ' — ' + (f.chars||0).toLocaleString() + ' chars'),
+        el('pre', {}, f.text || '(no text extracted)'))),
+    ) : null,
+    el('div', { style: 'margin-top:20px' },
+      state.buildings.map((b, i) => buildingCard(b, i))),
+    el('div', { style: 'display:flex;gap:8px;margin-top:16px;flex-wrap:wrap' },
+      el('button', { class: 'btn sm', onClick: () => { state.buildings.push(newBuilding()); save(); render(); } }, '+ Add building'),
+      el('button', { class: 'btn sm ghost', onClick: () => { if (confirm('Re-run pre-fill from the uploaded files? Existing buildings stay; new quotes may be added.')) { state.seeded = false; seedFromFiles(); render(); } } }, '↻ Re-seed from files'),
+    ),
+    el('div', { class: 'bar' }, el('div', { class: 'bar-in' },
+      el('button', { class: 'btn', onClick: () => go('upload') }, '← Upload'),
+      el('div', { style: 'flex:1' }),
+      el('button', { class: 'btn primary', disabled: !state.buildings.some(b => { const q = selQuote(b); return q && q.lines.length; }),
+        onClick: () => go('report') }, 'Continue to client report →'),
+    )),
+  );
+}
+
+/* ---------- Screen: Report ---------- */
+function reportBuilding(b) {
+  const q = selQuote(b);
+  if (!q || !q.lines.length) return null;
+  const t = quoteTotals(q);
+  const adv = (q.advisories || '').split('\n').map(s => s.trim()).filter(Boolean);
+  return el('div', {},
+    el('h3', {}, b.name + (b.addr ? ' — ' + b.addr : '')),
+    b.entity || b.si ? el('div', { style: 'font-size:11px;color:var(--ink-500)' },
+      [b.entity, b.si ? 'Sum insured ' + b.si : '', 'Proposed: ' + (q.insurer || 'Cartrack') + (q.quoteNo ? ' · ' + q.quoteNo : '')]
+        .filter(Boolean).join(' · ')) : null,
+    el('table', { class: 'rtable' },
+      el('thead', {}, el('tr', {},
+        el('th', {}, 'Cover section'), el('th', {}, 'Current limit'), el('th', { class: 'r' }, 'Current R/m'),
+        el('th', {}, 'Proposed limit'), el('th', { class: 'r' }, 'Proposed R/m'), el('th', { class: 'r' }, 'Δ / month'), el('th', {}, 'Status'))),
+      el('tbody', {},
+        q.lines.map(l => {
+          const { delta, st } = lineStatus(l);
+          const flags = lineFlags(l);
+          return el('tr', {},
+            el('td', {}, l.s || '—',
+              flags.length ? el('div', { style: 'font-size:9.5px;color:var(--red-700);font-weight:600;margin-top:1px' },
+                flags.map(f => f.text).join(' · ')) : null),
+            el('td', {}, l.curL || (l.curIncl ? 'Included' : l.curStr || '—')),
+            el('td', { class: 'r' }, l.cur == null ? (l.curStr || '—') : (l.curIncl ? 'Included' : fmtR(l.cur))),
+            el('td', {}, l.propNq ? '—' : l.propL || (l.propIncl ? 'Included' : l.propStr || '—')),
+            el('td', { class: 'r' }, l.propNq ? 'Not quoted' : l.prop == null ? (l.propStr || 'Not quoted') : (l.propIncl ? 'Included' : fmtR(l.prop))),
+            el('td', { class: 'r ' + (delta == null ? '' : delta < 0 ? 'rneg' : delta > 0 ? 'rpos' : '') },
+              delta == null ? '—' : fmtR(delta, true)),
+            el('td', {}, st === 'gap' ? 'Not covered' : st === 'added' ? 'Now covered' : st[0].toUpperCase()+st.slice(1)));
+        }),
+        el('tr', { class: 'tot' },
+          el('td', {}, 'Total'), el('td', {}),
+          el('td', { class: 'r' }, fmtR(t.cur)), el('td', {}),
+          el('td', { class: 'r' }, fmtR(t.prop)),
+          el('td', { class: 'r ' + (t.delta < 0 ? 'rneg' : t.delta > 0 ? 'rpos' : '') }, fmtR(t.delta, true)),
+          el('td', {})),
+      )),
+    adv.length ? el('ul', { class: 'badv' }, adv.map(a => el('li', {}, a))) : null,
+  );
+}
+// Headline summary + a factual, understated rationale for the Cartrack proposal.
+function reportSummary(withQuotes, p) {
+  if (!withQuotes.length) return null;
+  const n = withQuotes.length;
+  let added = 0, hasSasria = false, hasAssist = false;
+  for (const b of withQuotes) {
+    const q = selQuote(b);
+    for (const l of q.lines) {
+      if (lineStatus(l).st === 'added') added++;
+      if (l.prop != null && /sasria/i.test(l.s)) hasSasria = true;
+      if (l.prop != null && /assist/i.test(l.s)) hasAssist = true;
+    }
+  }
+  const saving = p.delta < -0.004, increase = p.delta > 0.004;
+  const annual = Math.abs(p.delta) * 12;
+  const fig = (l, v, s, cls) => el('div', { class: 'rfig' },
+    el('div', { class: 'l' }, l), el('div', { class: 'v' + (cls ? ' ' + cls : '') }, v), s ? el('div', { class: 's' }, s) : null);
+
+  // Facts only — states the position; the sell is left implicit.
+  const parts = [];
+  parts.push(n + ' building' + (n > 1 ? 's are' : ' is') + ' compared against a single consolidated Cartrack Insurance proposal.');
+  if (saving) parts.push('The proposed portfolio premium is ' + fmtR(p.prop) + ' per month (' + fmtR(p.prop * 12) + ' per year) — ' + fmtR(annual) + ' per year less than the current ' + fmtR(p.cur * 12) + '.');
+  else if (increase) parts.push('The proposed portfolio premium is ' + fmtR(p.prop) + ' per month, ' + fmtR(annual) + ' per year above the current spend, reflecting corrected sums insured and added cover.');
+  else parts.push('The proposed portfolio premium matches the current spend at ' + fmtR(p.prop) + ' per month.');
+  if (added) parts.push(added + ' cover section' + (added > 1 ? 's not carried on the current schedules are' : ' not carried on the current schedule is') + ' included in the proposal.');
+  if (hasSasria || hasAssist) parts.push('Premiums are quoted all-in' + (hasSasria && hasAssist ? ', inclusive of SASRIA and Assist' : hasSasria ? ', inclusive of SASRIA' : ', inclusive of Assist') + '.');
+
+  return el('div', {},
+    el('div', { class: 'rsummary' },
+      fig('Current — monthly', fmtR(p.cur), n + ' building' + (n > 1 ? 's' : '')),
+      fig('Cartrack proposed — monthly', fmtR(p.prop), 'all-in premium'),
+      fig('Net variance', fmtR(p.delta, true),
+        saving ? 'saves ' + fmtR(annual) + ' / year' : increase ? 'adds ' + fmtR(annual) + ' / year' : 'like-for-like',
+        saving ? 'rneg' : increase ? 'rpos' : '')),
+    el('div', { class: 'rnote' },
+      el('h3', {}, 'Summary'),
+      el('p', {}, parts.join(' ')),
+      el('ul', {},
+        el('li', {}, 'One portfolio and renewal cycle across all ' + n + ' building' + (n > 1 ? 's' : '') + ', under a single point of contact.'),
+        el('li', {}, 'Cover is set out line-for-line below, so each section can be checked against the current policy.'),
+        saving ? el('li', {}, 'Lower total premium while cover on compared sections is maintained or improved.')
+          : el('li', {}, 'Sums insured are aligned to replacement value across the portfolio.'))),
+  );
+}
+function screenReport() {
+  const rm = RMS.find(r => r.id === state.rmId) || RMS[0];
+  const p = portfolio();
+  const today = new Date().toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
+  const withQuotes = state.buildings.filter(b => { const q = selQuote(b); return q && q.lines.length; });
+  return el('div', {},
+    el('div', { class: 'eyebrow' }, 'Step 03'),
+    el('h1', { class: 'pg' }, 'Client report'),
+    el('p', { class: 'lede' }, 'A printable comparison for the client. Print to PDF from the button below — the page furniture is stripped automatically.'),
+    el('div', { class: 'sheet' },
+      el('div', { class: 'sheet-mast' },
+        el('img', { src: 'assets/logos/cartrack-insurance-horizontal-white.png', alt: 'Cartrack Insurance' }),
+        el('div', { class: 'doc' }, 'Commercial premium', el('br'), 'comparison')),
+      el('div', { class: 'sheet-b' },
+        el('h2', { class: 'rt' }, state.client.name || 'Premium comparison'),
+        el('div', { class: 'rsub' },
+          [state.client.type, state.client.renewal ? 'Renewal ' + state.client.renewal : '',
+           'Prepared ' + today + ' by ' + rm.name + ', Cartrack Insurance'].filter(Boolean).join(' · ')),
+        reportSummary(withQuotes, p),
+        withQuotes.length > 1 ? el('div', {},
+          el('h3', { style: 'margin-top:0' }, 'Portfolio summary'),
+          el('table', { class: 'rtable' },
+            el('thead', {}, el('tr', {},
+              el('th', {}, 'Building'), el('th', {}, 'Proposed insurer'),
+              el('th', { class: 'r' }, 'Current R/m'), el('th', { class: 'r' }, 'Proposed R/m'), el('th', { class: 'r' }, 'Δ / month'))),
+            el('tbody', {},
+              withQuotes.map(b => { const q = selQuote(b); const t = quoteTotals(q);
+                return el('tr', {},
+                  el('td', {}, b.name), el('td', {}, q.insurer || 'Cartrack'),
+                  el('td', { class: 'r' }, fmtR(t.cur)), el('td', { class: 'r' }, fmtR(t.prop)),
+                  el('td', { class: 'r ' + (t.delta < 0 ? 'rneg' : t.delta > 0 ? 'rpos' : '') }, fmtR(t.delta, true))); }),
+              el('tr', { class: 'tot' },
+                el('td', {}, 'Portfolio total'), el('td', {}),
+                el('td', { class: 'r' }, fmtR(p.cur)), el('td', { class: 'r' }, fmtR(p.prop)),
+                el('td', { class: 'r ' + (p.delta < 0 ? 'rneg' : p.delta > 0 ? 'rpos' : '') }, fmtR(p.delta, true))),
+            ))) : null,
+        withQuotes.map(b => reportBuilding(b)),
+        el('div', { class: 'sig' },
+          el('div', { class: 'who' }, el('b', {}, rm.name), el('span', {}, rm.role + ' · Cartrack Insurance')),
+          el('div', { class: 'who', style: 'text-align:right' }, el('b', {}, 'Prepared ' + today),
+            el('span', {}, 'Comparison of quoted monthly premiums'))),
+        el('div', { class: 'fineprint' },
+          'Figures are captured from insurer schedules and quotations by the Relationship Manager and are subject to the terms, conditions and exclusions of the underlying policy documents, which prevail over this summary. E&OE. This document is a premium comparison and does not itself constitute advice or an offer of cover.'),
+      ),
+    ),
+    el('div', { class: 'bar no-print' }, el('div', { class: 'bar-in' },
+      el('button', { class: 'btn', onClick: () => go('review') }, '← Review'),
+      el('div', { style: 'flex:1' }),
+      el('button', { class: 'btn primary', onClick: () => window.print() }, 'Print / save as PDF'),
+    )),
+  );
+}
+
+/* ---------- Router ---------- */
+function render() {
+  renderHeader();
+  const app = $('#app'); app.innerHTML = '';
+  if (state.step === 'upload') app.append(screenUpload());
+  else if (state.step === 'review') app.append(screenReview());
+  else app.append(screenReport());
+}
+render();
+
+/* Installable PWA */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

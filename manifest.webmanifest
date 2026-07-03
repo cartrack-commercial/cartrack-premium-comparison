@@ -1,0 +1,15 @@
+{
+  "name": "Cartrack Insurance — Premium Comparison",
+  "short_name": "CT Compare",
+  "description": "Commercial premium comparison tool for Cartrack Insurance Relationship Managers.",
+  "start_url": "./tool.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0B0C0F",
+  "theme_color": "#F47735",
+  "icons": [
+    { "src": "assets/logos/cartrack-insurance-mark.png", "sizes": "any", "type": "image/png", "purpose": "any" },
+    { "src": "assets/logos/cartrack-insurance-mark-white.png", "sizes": "any", "type": "image/png", "purpose": "maskable" }
+  ]
+}
