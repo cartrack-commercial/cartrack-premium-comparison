@@ -265,6 +265,51 @@
   .rnote ul { margin: 6px 0 0; padding-left: 18px; font-size: 11.5px; color: var(--ink-800,#1E222A); }
   .rnote li { margin-bottom: 3px; }
   @media (max-width: 640px) { .rsummary { grid-template-columns: 1fr; } }
+
+  /* ---------- welcome / pick-your-name gate ---------- */
+  .welcome { min-height: 100vh; background:
+      radial-gradient(760px 380px at 88% -12%, rgba(244,119,53,.10), transparent 62%),
+      radial-gradient(560px 320px at -8% 116%, rgba(244,119,53,.05), transparent 60%), #FFFFFF;
+    display: flex; flex-direction: column; }
+  .wel-top { background:#000; color:#fff; padding:14px 22px; display:flex; align-items:center; justify-content:space-between; }
+  .wel-top .b { font-family: var(--font-head); font-weight:800; font-size:16px; letter-spacing:.02em; }
+  .wel-top .b span { color: var(--orange-500,#F47735); }
+  .wel-top .meta { font-family: var(--font-mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#A8AFBC; text-align:right; }
+  .wel-body { flex:1; max-width: 860px; width:100%; margin:0 auto; padding: 34px 22px 48px; }
+  .wel-kick { display:flex; align-items:center; gap:10px; font-family: var(--font-mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color: var(--orange-600,#E2631C); margin:0 0 12px; }
+  .wel-kick::before { content:""; width:26px; height:2px; background: var(--orange-500,#F47735); }
+  .wel-h { font-family: var(--font-head); font-weight:900; font-size: clamp(30px,6vw,46px); line-height:1.02; letter-spacing:-.015em; text-transform:uppercase; margin:0 0 8px; color:#0B0C0F; }
+  .wel-h .accent { color: var(--orange-500,#F47735); }
+  .wel-sub { font-size:14.5px; color: var(--ink-500,#5E6675); margin:0 0 26px; max-width:560px; }
+  .rm-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:14px; }
+  .rm-tile { position:relative; overflow:hidden; background:#fff; border:1px solid #E7EAEF; border-radius:14px; padding:20px 16px 18px;
+    text-align:left; cursor:pointer; font-family:inherit; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    box-shadow: 0 1px 2px rgba(11,12,15,.05), 0 2px 8px rgba(11,12,15,.04); display:flex; flex-direction:column; gap:12px; }
+  .rm-tile::after { content:""; position:absolute; left:0; right:0; top:0; height:3px; background: linear-gradient(90deg, #FF8A47, #E2631C); transform: scaleX(0); transform-origin:left; transition: transform .2s ease; }
+  .rm-tile:hover, .rm-tile:focus-visible { transform: translateY(-4px); box-shadow: 0 16px 34px rgba(11,12,15,.13); border-color: var(--orange-500,#F47735); outline:none; }
+  .rm-tile:hover::after, .rm-tile:focus-visible::after { transform: scaleX(1); }
+  .rm-tile .av { width:52px; height:52px; border-radius:14px; background: linear-gradient(135deg,#FF8A47,#E2631C); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-family: var(--font-head); font-weight:800; font-size:20px; box-shadow: 0 4px 12px rgba(226,99,28,.28); }
+  .rm-tile .nm { font-family: var(--font-head); font-weight:800; font-size:17px; letter-spacing:.01em; color:#0B0C0F; }
+  .rm-tile .rl { font-size:11px; color: var(--ink-500,#5E6675); margin-top:2px; }
+  .rm-tile .arr { position:absolute; right:14px; bottom:14px; color:#CDD2DB; font-weight:800; transition: color .16s, transform .16s; }
+  .rm-tile:hover .arr { color: var(--orange-500,#F47735); transform: translateX(3px); }
+  .wel-quote { margin-top:30px; border-left:4px solid var(--orange-500,#F47735); background:#FAFBFC; border-radius:0 10px 10px 0; padding:16px 20px; }
+  .wel-quote .ql { font-family: var(--font-mono); font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color: var(--orange-600,#E2631C); margin:0 0 6px; }
+  .wel-quote blockquote { margin:0; font-size:15px; font-style:italic; font-weight:600; color:#1E222A; line-height:1.45; }
+  .wel-quote .qby { margin-top:6px; font-family: var(--font-head); font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.03em; color: var(--ink-500,#5E6675); }
+  /* selection flash */
+  .wel-flash { position:fixed; inset:0; z-index:200; background:#0B0C0F; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; padding:24px;
+    animation: flashIn .25s ease; }
+  .wel-flash .fav { width:76px; height:76px; border-radius:20px; background: linear-gradient(135deg,#FF8A47,#E2631C); display:flex; align-items:center; justify-content:center; font-family: var(--font-head); font-weight:800; font-size:30px; box-shadow:0 10px 30px rgba(226,99,28,.4); animation: pop .4s cubic-bezier(.2,1.3,.4,1); }
+  .wel-flash .fh { font-family: var(--font-head); font-weight:900; font-size:30px; text-transform:uppercase; letter-spacing:-.01em; margin-top:8px; }
+  .wel-flash .fs { font-size:13.5px; color:#A8AFBC; max-width:300px; }
+  @keyframes flashIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes pop { 0% { transform: scale(.4); opacity:0; } 100% { transform: scale(1); opacity:1; } }
+  @media (prefers-reduced-motion: no-preference) {
+    .rm-tile { opacity:0; transform: translateY(12px); animation: rmUp .5s ease forwards; }
+    @keyframes rmUp { to { opacity:1; transform:none; } }
+  }
 </style>
 </head>
 <body>
@@ -328,7 +373,7 @@ const STORE_KEY = 'ct-compare-v1';
 // <RM_SYSTEM_URL>#import=<base64url payload> — kept decoupled (no DB creds here).
 const RM_SYSTEM_URL = 'https://cartrack-commercial.github.io/cartrack-rm-system/';
 const blank = () => ({
-  rmId: 'hein', step: 'upload',
+  rmId: null, rmChosen: false, step: 'upload',
   client: { name: '', type: 'Portfolio — multiple buildings', renewal: '' },
   files: { schedule: [], quote: [] }, // {id,name,size,kind,status,text,chars,error}
   seeded: false,
@@ -1268,7 +1313,79 @@ function screenReport() {
 }
 
 /* ---------- Router ---------- */
+/* ---------- welcome gate: pick your name ---------- */
+const WELCOME_QUOTES = [
+  ["You don't close a sale; you open a relationship.","Patricia Fripp"],
+  ["Make a customer, not a sale.","Katherine Barchetti"],
+  ["Stop selling. Start helping.","Zig Ziglar"],
+  ["The harder you work, the luckier you get.","Gary Player"],
+  ["People don't buy for logical reasons. They buy for emotional reasons.","Zig Ziglar"],
+  ["If you are not taking care of your customer, your competitor will.","Bob Hooey"],
+  ["Approach each customer with the idea of helping them solve a problem.","Brian Tracy"],
+  ["Success is the sum of small efforts, repeated day in and day out.","Robert Collier"],
+  ["Your attitude, not your aptitude, will determine your altitude.","Zig Ziglar"],
+  ["Great things never came from comfort zones.","Anonymous"],
+  ["Opportunities don't happen. You create them.","Chris Grosser"],
+  ["The best way to predict the future is to create it.","Peter Drucker"],
+];
+const WELCOME_LINES = [
+  "Let's find them a better deal than what they've got.",
+  "Time to sharpen the numbers.",
+  "Build it clean — the comparison sells itself.",
+  "Every gap you spot is a client you keep.",
+  "Make the proposal impossible to say no to.",
+  "Show them exactly why Cartrack wins.",
+];
+function greetWord(){ const h=new Date().getHours(); return h<12?'Good morning':h<17?'Good afternoon':'Good evening'; }
+function screenWelcome(){
+  const dayN=Math.floor(new Date(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()).getTime()/864e5);
+  const [qt,qb]=WELCOME_QUOTES[((dayN % WELCOME_QUOTES.length)+WELCOME_QUOTES.length)%WELCOME_QUOTES.length];
+  const grid = el('div',{class:'rm-grid'},
+    RMS.map((r,i)=> el('button',{class:'rm-tile', style:`animation-delay:${(0.04*i+0.05).toFixed(2)}s`, onClick:()=>pickRm(r.id)},
+      el('div',{class:'av'}, r.initials),
+      el('div',{},
+        el('div',{class:'nm'}, r.name),
+        el('div',{class:'rl'}, r.role)),
+      el('span',{class:'arr'},'→')
+    ))
+  );
+  return el('div',{class:'welcome'},
+    el('div',{class:'wel-top'},
+      el('div',{class:'b'}, 'CARTRACK ', el('span',{},'INSURANCE')),
+      el('div',{class:'meta'}, el('div',{},'Premium Comparison'), el('div',{style:'color:#7C8492'},'FSP 17266'))),
+    el('div',{class:'wel-body'},
+      el('div',{class:'wel-kick'}, greetWord()+' — Commercial team'),
+      el('h1',{class:'wel-h', html:'Who’s comparing <span class="accent">today?</span>'}),
+      el('p',{class:'wel-sub'}, 'Tap your name to start a fresh comparison. Everything you load stays on this device only.'),
+      grid,
+      el('div',{class:'wel-quote'},
+        el('div',{class:'ql'}, 'Fuel for the day'),
+        el('blockquote',{}, '“'+qt+'”'),
+        el('div',{class:'qby'}, '— '+qb))
+    )
+  );
+}
+function pickRm(id){
+  const rm = RMS.find(r=>r.id===id) || RMS[0];
+  state.rmId = id; state.rmChosen = true; state.step='upload'; save();
+  const first = String(rm.name).split('/')[0];
+  const line = WELCOME_LINES[Math.floor(Math.random()*WELCOME_LINES.length)];
+  const flash = el('div',{class:'wel-flash'},
+    el('div',{class:'fav'}, rm.initials),
+    el('div',{class:'fh'}, 'You’re up, '+first+'!'),
+    el('div',{class:'fs'}, line));
+  document.body.append(flash);
+  setTimeout(()=>{ flash.remove(); render(); }, 1300);
+}
+
 function render() {
+  const mast = document.querySelector('.masthead');
+  if (!state.rmChosen) {
+    if (mast) mast.style.display = 'none';
+    const app = $('#app'); app.innerHTML = ''; app.append(screenWelcome());
+    return;
+  }
+  if (mast) mast.style.display = '';
   renderHeader();
   const app = $('#app'); app.innerHTML = '';
   if (state.step === 'upload') app.append(screenUpload());
