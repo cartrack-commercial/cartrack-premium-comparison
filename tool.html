@@ -294,7 +294,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 /* ============================================================
    Cartrack Premium Comparison — skeleton (iteration 2)
-   Device-only: all state persists to localStorage. No backend.
+   Device-only: state lives in sessionStorage for the current visit only — every
+   new visit starts clean (client data never lingers on a device). No backend.
    Upload → local extraction → seeded, editable Review → Report.
    ============================================================ */
 
@@ -335,13 +336,18 @@ const blank = () => ({
 let state = load();
 function load() {
   try {
-    const s = JSON.parse(localStorage.getItem(STORE_KEY));
+    // Client data must never linger on a device between visits: purge any copy
+    // saved by older builds (localStorage persisted across sessions), then read
+    // only sessionStorage — survives an accidental refresh mid-comparison, but
+    // every new visit (new tab / reopened browser) starts clean.
+    try { localStorage.removeItem(STORE_KEY); } catch {}
+    const s = JSON.parse(sessionStorage.getItem(STORE_KEY));
     if (!s || !s.files) return blank();
     s.buildings ||= []; s.quotes ||= []; s.seeded ||= false;
     return s;
   } catch { return blank(); }
 }
-function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} }
+function save() { try { sessionStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} }
 
 const $ = (s, r=document) => r.querySelector(s);
 const el = (tag, props={}, ...kids) => {
@@ -498,7 +504,7 @@ async function addFiles(panel, fileList) {
     if (rec.status === 'err') continue;
     try {
       const { text, sheets } = await extractText(f);
-      rec.text = text.slice(0, 200000); // keep localStorage sane
+      rec.text = text.slice(0, 200000); // keep sessionStorage sane
       rec.chars = text.length;
       rec.sheets = sheets;              // authoritative building-tab list (XLSX)
       rec.status = 'ok';
