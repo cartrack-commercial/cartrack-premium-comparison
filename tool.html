@@ -334,6 +334,8 @@
 
 <!-- Local, in-browser extraction libraries (no server; files never leave the device) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- OCR engine for scanned (image-only) PDFs — runs in the browser, loads on first use -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 
 <script type="module">
 import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
@@ -516,8 +518,34 @@ function sendToBook() {
   window.open(RM_SYSTEM_URL + '#import=' + b64urlEncode(payload), '_blank', 'noopener');
 }
 
+/* ---------- OCR fallback for scanned PDFs (in-browser, Tesseract) ---------- */
+async function ocrPdf(pdf, onProgress) {
+  if (typeof Tesseract === 'undefined') {
+    throw new Error('Scanned file — OCR needs an internet connection the first time. Connect and retry, or ask for a digital (text) PDF.');
+  }
+  const worker = await Tesseract.createWorker('eng');
+  let out = '';
+  try {
+    for (let p = 1; p <= pdf.numPages; p++) {
+      if (onProgress) onProgress(p, pdf.numPages);
+      const page = await pdf.getPage(p);
+      const viewport = page.getViewport({ scale: 2 }); // 2x = sharper text for OCR
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      const { data: { text } } = await worker.recognize(canvas);
+      out += text + '\n';
+      canvas.width = 0; canvas.height = 0; // release memory between pages
+    }
+  } finally {
+    await worker.terminate();
+  }
+  return out.trim();
+}
+
 /* ---------- Local extraction ---------- */
-async function extractText(file) {
+async function extractText(file, onProgress) {
   const name = file.name.toLowerCase();
   if (name.endsWith('.pdf')) {
     const buf = await file.arrayBuffer();
@@ -527,6 +555,15 @@ async function extractText(file) {
       const page = await pdf.getPage(p);
       const tc = await page.getTextContent();
       out += tc.items.map(i => i.str).join(' ') + '\n';
+    }
+    // A scanned (image-only) PDF has essentially no selectable text. When the
+    // real text layer comes back near-empty, fall back to OCR — render each page
+    // to an image and read it optically. Threshold scales with page count.
+    if (out.replace(/\s/g, '').length < Math.max(40, pdf.numPages * 8)) {
+      const ocr = await ocrPdf(pdf, onProgress);
+      if (ocr.replace(/\s/g, '').length > out.replace(/\s/g, '').length) {
+        return { text: ocr, sheets: null, ocr: true };
+      }
     }
     return { text: out.trim(), sheets: null };
   }
@@ -551,12 +588,15 @@ async function addFiles(panel, fileList) {
     state.files[panel].push(rec); state.seeded = false; save(); render();
     if (rec.status === 'err') continue;
     try {
-      const { text, sheets } = await extractText(f);
+      const onProgress = (p, n) => { rec.ocrMsg = `Scanned file — reading page ${p} of ${n}…`; save(); render(); };
+      const { text, sheets, ocr } = await extractText(f, onProgress);
       rec.text = text.slice(0, 200000); // keep sessionStorage sane
       rec.chars = text.length;
       rec.sheets = sheets;              // authoritative building-tab list (XLSX)
+      rec.ocr = !!ocr;                  // was this read via OCR?
+      rec.ocrMsg = '';
       rec.status = 'ok';
-    } catch (e) { rec.status = 'err'; rec.error = (e && e.message) || 'Could not read file'; }
+    } catch (e) { rec.status = 'err'; rec.ocrMsg = ''; rec.error = (e && e.message) || 'Could not read file'; }
     save(); render();
   }
 }
@@ -964,10 +1004,10 @@ function panel(title, n, key, accept, hint) {
         el('div', { class: 'meta' }, el('div', { class: 'nm' }, f.name),
           el('div', { class: 'st' }, f.status === 'ok'
             ? (fmtSize(f.size) + (f.sheets && f.sheets.length ? ' · ' + f.sheets.length + ' building tab' + (f.sheets.length===1?'':'s') + ' detected'
-               : ' · ' + (f.chars||0).toLocaleString() + ' chars read'))
-            : f.status === 'busy' ? 'Reading…' : (f.error || 'Error'))),
+               : ' · ' + (f.chars||0).toLocaleString() + ' chars read' + (f.ocr ? ' · scanned (OCR)' : '')))
+            : f.status === 'busy' ? (f.ocrMsg || 'Reading…') : (f.error || 'Error'))),
         el('span', { class: 'pill ' + (f.status === 'ok' ? 'ok' : f.status === 'busy' ? 'busy' : 'err') },
-          f.status === 'ok' ? 'Read' : f.status === 'busy' ? 'Reading' : 'Failed'),
+          f.status === 'ok' ? (f.ocr ? 'Read · OCR' : 'Read') : f.status === 'busy' ? (f.ocrMsg ? 'OCR' : 'Reading') : 'Failed'),
         el('button', { class: 'x', title: 'Remove', onClick: () => removeFile(key, f.id) }, '×'),
       )),
       input, dz,
