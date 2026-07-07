@@ -910,10 +910,10 @@ function newQuote(buildingId, insurer='', quoteNo='') {
 // read the premium totals instead.
 function looksLikeFleet(text) {
   if (!text) return false;
-  const t = text.toLowerCase();
-  let hits = 0;
-  [/\bfleet\b/, /number of vehicles/, /total fleet value/, /comprehensive/, /\bmotor\b/, /\bvehicle/, /sasria premium calculation/].forEach(re => { if (re.test(t)) hits++; });
-  return hits >= 3;
+  // Strong, fleet-ONLY phrases. Generic words like "motor"/"vehicle"/"comprehensive"
+  // also appear in property policies, so they are deliberately excluded — otherwise a
+  // property portfolio gets mis-read as a single vehicle fleet.
+  return /total fleet value|number of vehicles|fleetb(?:ü|u)ddy|private vehicles fleet|types of vehicle\s*\(sasria|unspecified vehicles/i.test(text);
 }
 const _fnum = s => parseFloat(String(s).replace(/[R\s,]/g, '')) || 0;
 // Parse a proposed fleet quote into comparison sections (per-fleet + SASRIA + fees),
@@ -943,7 +943,11 @@ function parseFleetCurTotal(text) {
 }
 function fleetSeed() {
   const qFiles = state.files.quote.filter(f => f.status === 'ok');
-  if (!qFiles.length || !qFiles.some(f => looksLikeFleet(f.text))) return false;
+  const fleetFiles = qFiles.filter(f => looksLikeFleet(f.text));
+  if (!fleetFiles.length) return false;
+  // Only hijack the property flow if we can genuinely parse a fleet structure
+  // (real fleet items + a reconciling total) from a proposal.
+  if (!fleetFiles.some(f => { const p = parseFleetSections(f.text); return p.secs.length >= 1 && p.grand > 0; })) return false;
   if (state.buildings.some(b => b.__fleet)) return true; // already fleet-seeded
   const client = (state.client.name || '').trim();
   if (!state.buildings.length) state.buildings.push(newBuilding(client ? (client + ' — vehicle fleet') : 'Vehicle fleet'));
