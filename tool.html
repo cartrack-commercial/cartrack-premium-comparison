@@ -431,7 +431,9 @@ const el = (tag, props={}, ...kids) => {
   for (const c of kids.flat()) if (c != null) n.append(c.nodeType ? c : document.createTextNode(c));
   return n;
 };
-const uid = () => Math.random().toString(36).slice(2, 9);
+// Hoisted (function declaration) so blank()/load() can use it during the
+// top-level `let state = load()` — a const arrow here would be in its TDZ.
+function uid() { return Math.random().toString(36).slice(2, 9); }
 const fmtSize = b => b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(0)+' KB' : (b/1048576).toFixed(1)+' MB';
 
 /* ---------- money ---------- */
