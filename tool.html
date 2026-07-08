@@ -1434,6 +1434,73 @@ function quoteBlock(b, q) {
 }
 // Align every quote in a building to the same sections and keep Current in sync,
 // so the review shows one Current column with a Proposed column per insurer.
+// ---- Excess & cover-terms comparison (qualitative, RM-editable) ----
+const TERM_TEMPLATES = {
+  motor: ['Own Damage excess', 'Theft / Hijack excess', 'Third Party excess', 'Windscreen excess', 'Night-driving excess', 'Single vehicle accident', 'Driver age penalty', 'Licence penalty', 'Tipping / overturning', 'Third Party Liability limit', 'Passenger Liability limit'],
+  property: ['Buildings excess', 'Business Interruption', 'Public Liability limit', 'SASRIA', 'Fire excess', 'Theft excess', 'Glass', 'Accidental damage', 'Fidelity Guarantee'],
+  general: ['Excess structure', 'Key cover limits', 'Notable terms / conditions', 'Exclusions to note'],
+};
+function policyKind() {
+  const t = [...state.files.schedule, ...state.files.quote].filter(f => f.status === 'ok').map(f => f.text || '').join(' ').toLowerCase();
+  if (/\bfleet\b|number of vehicles|vehicle schedule|own damage|hijack|windscreen|\bregistration (?:number|no)\b/.test(t) && !/body corporate|buildings combined/.test(t)) return 'motor';
+  if (/buildings combined|body corporate|sum insured|business interruption|office park/.test(t)) return 'property';
+  return 'general';
+}
+function ensureTerms(b) {
+  if (b.terms) return;
+  b.terms = TERM_TEMPLATES[policyKind()].map(item => ({ id: uid(), item, current: '', props: {} }));
+}
+// Editable (review) or read-only (report) excess/terms table for a building.
+function termsTable(b, qs, editable) {
+  ensureTerms(b);
+  const tin = (obj, key, ph) => { const i = el('input', { class: 'rvin', value: obj[key] || '', placeholder: ph || '' });
+    i.oninput = () => { obj[key] = i.value; save(); }; i.onchange = () => render(); return i; };
+  const cell = (val, obj, key) => editable ? el('td', {}, tin(obj, key, '—')) : el('td', {}, val || '—');
+  return el('div', { style: 'margin-top:22px' },
+    el('h3', { style: 'font-size:13px;margin:0 0 8px' }, 'Excess & cover terms — current vs proposed'),
+    el('div', { style: 'overflow-x:auto' },
+      el('table', { class: 'rvtable' },
+        el('thead', {}, el('tr', {},
+          el('th', { style: 'min-width:150px' }, 'Item'),
+          el('th', { style: 'min-width:150px' }, 'Current'),
+          ...qs.map(q => el('th', { style: 'min-width:150px' }, q.insurer || 'Proposed')),
+          editable ? el('th', {}) : null)),
+        el('tbody', {},
+          b.terms.map(t => el('tr', {},
+            cell(t.item, t, 'item'),
+            cell(t.current, t, 'current'),
+            ...qs.map(q => editable ? el('td', {}, (() => { t.props = t.props || {}; return tin(t.props, q.id, '—'); })()) : el('td', {}, (t.props && t.props[q.id]) || '—')),
+            editable ? el('td', {}, el('button', { class: 'x', title: 'Remove row', onClick: () => { b.terms = b.terms.filter(x => x.id !== t.id); save(); render(); } }, '×')) : null))))),
+    editable ? el('button', { class: 'btn sm', style: 'margin-top:10px', onClick: () => { b.terms.push({ id: uid(), item: '', current: '', props: {} }); save(); render(); } }, '+ Add term') : null,
+  );
+}
+const VEHICLE_COLS = [
+  { key: 'reg', label: 'Registration', min: 120 },
+  { key: 'desc', label: 'Vehicle / description', min: 170 },
+  { key: 'value', label: 'Sum insured', min: 110 },
+  { key: 'odExcess', label: 'Own damage excess', min: 130 },
+  { key: 'thExcess', label: 'Theft / hijack excess', min: 130 },
+];
+// Per-vehicle schedule (motor policies). Editable on review, read-only on report.
+function vehicleTable(b, editable) {
+  b.vehicles = b.vehicles || [];
+  const tin = (obj, key, ph) => { const i = el('input', { class: 'rvin', value: obj[key] || '', placeholder: ph || '' });
+    i.oninput = () => { obj[key] = i.value; save(); }; return i; };
+  return el('div', { style: 'margin-top:22px' },
+    el('h3', { style: 'font-size:13px;margin:0 0 8px' }, 'Vehicle schedule'),
+    el('div', { style: 'overflow-x:auto' },
+      el('table', { class: 'rvtable' },
+        el('thead', {}, el('tr', {},
+          ...VEHICLE_COLS.map(c => el('th', { style: 'min-width:' + c.min + 'px' }, c.label)),
+          editable ? el('th', {}) : null)),
+        el('tbody', {},
+          b.vehicles.map(v => el('tr', {},
+            ...VEHICLE_COLS.map(c => editable ? el('td', {}, tin(v, c.key, '—')) : el('td', {}, v[c.key] || '—')),
+            editable ? el('td', {}, el('button', { class: 'x', title: 'Remove vehicle', onClick: () => { b.vehicles = b.vehicles.filter(x => x.id !== v.id); save(); render(); } }, '×')) : null)),
+          (!editable && !b.vehicles.length) ? el('tr', {}, el('td', { colspan: VEHICLE_COLS.length }, '—')) : null))),
+    editable ? el('button', { class: 'btn sm', style: 'margin-top:10px', onClick: () => { b.vehicles.push({ id: uid() }); save(); render(); } }, '+ Add vehicle') : null,
+  );
+}
 function normalizeLines(b) {
   const qs = quotesOf(b);
   const order = [], seen = new Set();
@@ -1503,9 +1570,11 @@ function buildingCard(b, idx) {
         qs.length ? el('button', { class: 'btn sm', onClick: () => { qs.forEach(qq => qq.lines.push({ id: uid(), s: '', curL: '', cur: null, propL: '', prop: null, curStr: '', propStr: '' })); save(); render(); } }, '+ Add line') : null,
         (qs.length && order.length === 0) ? el('button', { class: 'btn sm', onClick: () => { COMMON_SECTIONS.forEach(s => qs.forEach(qq => qq.lines.push(newLine(s)))); save(); render(); } }, '+ Add common sections') : null,
       ),
-      qs.length ? el('div', { style: 'margin-top:14px' },
-        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Advisories (one per line — appear on the report)'),
-          (() => { const t2 = el('textarea', { placeholder: 'e.g. a limit reduces — confirm before accepting.' }, qs[0].advisories || '');
+      qs.length ? termsTable(b, qs, true) : null,
+      (qs.length && policyKind() === 'motor') ? vehicleTable(b, true) : null,
+      qs.length ? el('div', { style: 'margin-top:16px' },
+        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Notes / advisories (appear on the report)'),
+          (() => { const t2 = el('textarea', { placeholder: 'e.g. a limit reduces — confirm before accepting. Or any note for the client.' }, qs[0].advisories || '');
             t2.oninput = () => { qs.forEach(qq => qq.advisories = t2.value); save(); }; return t2; })())) : null,
     ),
   );
@@ -1640,6 +1709,8 @@ function reportBuildingMulti(b, opts, recId) {
                 curTotal ? (t.prop - curTotal < 0 ? '− ' + fmtR(Math.abs(t.prop - curTotal) * 12).replace('R ', 'R ') + '/yr' : t.prop - curTotal > 0 ? '+ ' + fmtR((t.prop - curTotal) * 12).replace('R ', 'R ') + '/yr' : 'like-for-like') : ''))))))),
     el('div', { style: 'font-size:10px;color:var(--ink-500);margin-top:4px' },
       '✓ = lowest premium for that section. Red = option did not quote a section the others cover.'),
+    (b.terms && b.terms.some(t => t.item || t.current || (t.props && Object.values(t.props).some(v => v)))) ? termsTable(b, opts, false) : null,
+    (b.vehicles && b.vehicles.length) ? vehicleTable(b, false) : null,
   );
 }
 
@@ -1682,6 +1753,8 @@ function reportBuilding(b) {
           el('td', { class: 'r ' + (t.delta < 0 ? 'rneg' : t.delta > 0 ? 'rpos' : '') }, fmtR(t.delta, true)),
           el('td', {})),
       )),
+    (b.terms && b.terms.some(x => x.item || x.current || (x.props && Object.values(x.props).some(v => v)))) ? termsTable(b, [q], false) : null,
+    (b.vehicles && b.vehicles.length) ? vehicleTable(b, false) : null,
     adv.length ? el('ul', { class: 'badv' }, adv.map(a => el('li', {}, a))) : null,
   );
 }
