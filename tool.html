@@ -958,9 +958,33 @@ function looksLikeFleet(text) {
   // property portfolio gets mis-read as a single vehicle fleet.
   return /total fleet value|number of vehicles|fleetb(?:ü|u)ddy|private vehicles fleet|types of vehicle\s*\(sasria|unspecified vehicles/i.test(text);
 }
-const _fnum = s => parseFloat(String(s).replace(/[R\s,]/g, '')) || 0;
-// Parse a proposed fleet quote into comparison sections (per-fleet + SASRIA + fees),
-// with a balancing line so the sections always reconcile to the stated grand total.
+const _fnum = s => parseMoney2(s) || 0;
+// Robust money parser: handles R 65 056.26, 44 801,23 (comma decimal), 11,262.26,
+// R2,500,000.00 — SA and international formats. The last , or . is the decimal.
+function parseMoney2(s) {
+  if (s == null) return null;
+  let str = String(s).replace(/[Rr]/g, '').replace(/\s/g, '').trim();
+  if (!/\d/.test(str)) return null;
+  const dec = Math.max(str.lastIndexOf(','), str.lastIndexOf('.'));
+  if (dec >= 0) str = str.slice(0, dec).replace(/[.,]/g, '') + '.' + str.slice(dec + 1).replace(/[^\d]/g, '');
+  else str = str.replace(/[.,]/g, '');
+  const n = parseFloat(str);
+  return Number.isFinite(n) ? n : null;
+}
+// Generic "total premium" off any fleet/motor quote or schedule — takes the
+// figure next to a total-premium label, largest across the document.
+function fleetTotalPremium(text) {
+  const lab = /total\s*premium|premium\s*payable|total\s*monthly|grand\s*total|policy\s*premium|total\s*payable/gi;
+  const cands = []; let m;
+  while ((m = lab.exec(text || ''))) {
+    const seg = text.slice(m.index + m[0].length, m.index + m[0].length + 40);
+    const nums = [...seg.matchAll(/(\d[\d \.,]*\d)/g)].map(x => parseMoney2(x[1])).filter(v => v && v > 50);
+    if (nums.length) cands.push(nums[0]); // first plausible amount after the label
+  }
+  return cands.length ? Math.max(...cands) : null;
+}
+// Parse a proposed fleet quote into comparison sections. Detailed per-fleet
+// breakdown for the FleetBüddy layout; a generic total-premium line otherwise.
 function parseFleetSections(text) {
   const first = re => { const m = re.exec(text); return m ? _fnum(m[1]) : null; };
   const fleets = [];
@@ -976,14 +1000,12 @@ function parseFleetSections(text) {
   if (sasria) secs.push({ s: 'SASRIA', prop: sasria });
   if (fees) secs.push({ s: 'Broker / admin fee', prop: fees });
   if (!secs.length && grand) secs.push({ s: 'Motor & vehicle cover', prop: grand });
+  // Fallback for any other insurer layout: the headline total premium.
+  if (!secs.length) { const tot = fleetTotalPremium(text); if (tot) secs.push({ s: 'Total fleet premium', prop: tot }); }
   return { secs, grand: grand || (sumF + (sasria || 0) + (fees || 0)) };
 }
-// Best-effort single current premium off a (possibly OCR'd) schedule.
-function parseFleetCurTotal(text) {
-  const cands = [...(text || '').matchAll(/(?:total premium|monthly premium|premium payable|total monthly|premium due)[^R\d]{0,14}R?\s?([\d][\d ,]{2,}\.\d{2})/gi)]
-    .map(m => _fnum(m[1])).filter(v => v > 100);
-  return cands.length ? Math.max(...cands) : null;
-}
+// Current premium off a (possibly OCR'd) schedule — robust across formats.
+function parseFleetCurTotal(text) { return fleetTotalPremium(text); }
 function fleetSeed() {
   // The client type is the router: fleet reader runs ONLY when the RM selected
   // "Large Vehicle Fleets". Everything else reads as commercial property — so a
