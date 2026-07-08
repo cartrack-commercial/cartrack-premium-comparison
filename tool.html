@@ -1042,8 +1042,34 @@ function parseFleetSections(text) {
   }
   return { secs, grand: grand || (sumF + (sasria || 0) + (fees || 0)) };
 }
-// Current premium off a (possibly OCR'd) schedule — robust across formats.
-function parseFleetCurTotal(text) { return fleetTotalPremium(text); }
+// Current all-in premium off a (possibly OCR'd) schedule, broken into its parts.
+// SA fleet schedules usually state a base cover/motor premium and then ADD
+// Risk Services / admin fees and SASRIA on top — a single "total premium" label
+// typically catches only the base, understating what the client actually pays.
+// Returns { total, parts:[{s,cur}] } so the current side is transparent + editable.
+function parseFleetCurrent(text) {
+  const t = text || '';
+  const base = fleetTotalPremium(t);
+  if (base == null) return { total: null, parts: [] };
+  // Separately-stated Risk Services / administration fee (a fraction of the base).
+  const fm = /(?:risk\s*services?(?:\s*fees?)?|administration\s*fee|admin(?:istration)?\s*charge|policy\s*fee)[^\d%]{0,20}(?:R\s*)?(\d[\d .,]*\d)/i.exec(t);
+  let fee = fm ? parseMoney2(fm[1]) : null; if (!(fee && fee > 0 && fee < base * 0.4)) fee = null;
+  // SASRIA, stated separately (always a small slice of the base).
+  const sas = fleetSasria(t, base);
+  // Explicit all-in grand total, if the schedule states one.
+  const am = /(?:total\s*(?:premium\s*)?(?:incl(?:uding)?|inc\.?)\s*sasria|total\s*amount\s*(?:payable|due)|total\s*(?:monthly\s*)?payable)[^\d%]{0,24}(?:R\s*)?(\d[\d .,]*\d)/i.exec(t);
+  const allIn = am ? parseMoney2(am[1]) : null;
+  // Headline already equals the all-in figure → it includes the add-ons; don't re-add.
+  if (allIn && Math.abs(allIn - base) <= 1) return { total: base, parts: [{ s: 'Current premium (as billed)', cur: base }] };
+  const parts = [{ s: 'Current premium — cover', cur: base }];
+  if (fee) parts.push({ s: 'Current premium — Risk services / fees', cur: fee });
+  if (sas) parts.push({ s: 'Current premium — SASRIA', cur: sas });
+  const sum = +parts.reduce((s, p) => s + p.cur, 0).toFixed(2);
+  // If a stated all-in total exists and our sum overshoots it, trust the stated total.
+  if (allIn && sum > allIn + 1) return { total: allIn, parts: [{ s: 'Current premium (as billed)', cur: allIn }] };
+  return { total: sum, parts };
+}
+function parseFleetCurTotal(text) { return parseFleetCurrent(text).total; }
 // Do the uploaded documents look like a vehicle fleet? Used only as a safety net
 // when property reading found nothing, so a mis-set client type still works.
 function looksFleetish() {
@@ -1062,13 +1088,19 @@ function genericSeed() {
   const bld = state.buildings[0]; bld.__generic = true;
   // Normalise everything to a monthly basis so the comparison is apples-to-apples:
   // if a quote states premiums per year, divide by 12.
-  let curTotal = null, converted = false;
+  let curTotal = null, curParts = [], converted = false;
   for (const f of state.files.schedule) {
     if (f.status !== 'ok') continue;
-    const c = parseFleetCurTotal(f.text); if (!c) continue;
-    const annual = premiumIsAnnual(f.text); const monthly = annual ? c / 12 : c;
-    if (monthly > (curTotal || 0)) { curTotal = monthly; if (annual) converted = true; }
+    const cur = parseFleetCurrent(f.text); if (cur.total == null) continue;
+    const annual = premiumIsAnnual(f.text); const monthly = annual ? cur.total / 12 : cur.total;
+    if (monthly > (curTotal || 0)) {
+      curTotal = monthly;
+      curParts = cur.parts.map(p => ({ s: p.s, cur: annual ? +(p.cur / 12).toFixed(2) : p.cur }));
+      if (annual) converted = true;
+    }
   }
+  if (!curParts.length) curParts = [{ s: 'Current premium (as billed)', cur: curTotal }];
+  const splitCur = curParts.length > 1;
   const qFiles = state.files.quote.filter(f => f.status === 'ok');
   // One column per PROPOSAL (option). Files dropped under the same proposal are
   // combined — their premiums summed into a single column.
@@ -1092,10 +1124,13 @@ function genericSeed() {
     const q = newQuote(bld.id, insurer, files[0] ? guessQuoteNo(files[0].text, files[0].name) : '');
     q.optionId = oid; if (files[0]) q.srcId = files[0].id;
     q.lines = [];
-    q.lines.push({ id: uid(), s: 'Current premium (as billed)', curL: '', cur: curTotal, propL: '', prop: null, propNq: true, curStr: '', propStr: 'n/a' });
+    curParts.forEach(p => q.lines.push({ id: uid(), s: p.s, curL: '', cur: p.cur, propL: '', prop: null, propNq: true, curStr: '', propStr: 'n/a' }));
     const secList = order.length ? order.map(k => ({ s: k, prop: +combined.get(k).toFixed(2) })) : [{ s: 'Total premium', prop: null }];
     secList.forEach(s => q.lines.push({ id: uid(), s: s.s, curL: '', cur: null, propL: '', prop: s.prop, curStr: '', propStr: '' }));
-    if (converted) q.advisories = 'Premiums stated per year on a quote are shown here per month (÷12). Confirm the basis of every figure before presenting.';
+    const notes = [];
+    if (splitCur) notes.push('Current premium shown all-in (cover + Risk services/fees + SASRIA) so it compares like-for-like with the proposed premium. Confirm each part against the schedule.');
+    if (converted) notes.push('Premiums stated per year on a quote are shown here per month (÷12). Confirm the basis of every figure before presenting.');
+    if (notes.length) q.advisories = notes.join('\n');
     state.quotes.push(q);
   });
   state.seeded = true; save();
