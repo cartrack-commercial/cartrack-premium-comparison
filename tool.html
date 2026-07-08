@@ -233,6 +233,20 @@
   .recbadge { display: inline-block; font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
     background: var(--orange-500,#F47735); color: #fff; padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
   .savechip { display: block; font-size: 9.5px; font-weight: 600; margin-top: 1px; }
+  /* ---- Review: side-by-side editable comparison table ---- */
+  .rvtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .rvtable th { text-align: left; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-600,#454C58); background: var(--ink-100,#ECEEF2); padding: 6px 8px; border: 1px solid var(--hairline,#E7EAEF); vertical-align: middle; }
+  .rvtable th.r { text-align: right; }
+  .rvtable td { padding: 2px 5px; border: 1px solid var(--hairline,#E7EAEF); vertical-align: middle; }
+  .rvtable td.r { text-align: right; }
+  .rvtable tr.tot td { background: var(--ink-25,#FAFBFC); font-weight: 700; padding: 8px; }
+  .rvtable td.best { background: var(--orange-50,#FEF4EC); color: var(--green-700,#166B46); }
+  .rvin { width: 100%; border: 1px solid transparent; background: transparent; font: inherit; padding: 6px; border-radius: 6px; box-sizing: border-box; }
+  .rvin:hover { border-color: var(--hairline,#E7EAEF); }
+  .rvin:focus { outline: none; border-color: var(--color-accent,#F47735); background: #fff; }
+  .rvin.r { text-align: right; font-family: var(--font-mono); }
+  .rvname { border: 1px solid transparent; background: transparent; font: inherit; font-weight: 800; color: inherit; padding: 2px 5px; border-radius: 6px; min-width: 130px; }
+  .rvname:hover { border-color: rgba(255,255,255,.25); } .rvname:focus { outline: none; border-color: var(--color-accent,#F47735); }
   .optcards { display: grid; gap: 10px; margin: 4px 0 20px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
   .optcard { border: 1px solid var(--ink-150,#DFE3E9); border-radius: 8px; padding: 11px 13px; position: relative; }
   .optcard.rec { border-color: var(--orange-500,#F47735); box-shadow: inset 0 3px 0 var(--orange-500,#F47735); }
@@ -437,7 +451,7 @@ const STORE_KEY = 'ct-compare-v1';
 const RM_SYSTEM_URL = 'https://cartrack-commercial.github.io/cartrack-rm-system/';
 const blank = () => ({
   rmId: null, rmChosen: false, step: 'upload',
-  client: { name: '', type: 'Commercial Property', renewal: '' },
+  client: { name: '', type: 'Commercial Insurance', renewal: '' },
   options: [{ id: uid(), insurer: '' }], // Cartrack proposal options (insurers) shown to the client
   files: { schedule: [], quote: [] }, // {id,name,size,kind,status,text,chars,error,optionId}
   seeded: false,
@@ -1011,18 +1025,18 @@ function parseFleetSections(text) {
   const grand = first(/Cover Sub-?Total\s*R[\d ,]+\.\d{2}\s*Premium\s*R([\d ,]+\.\d{2})/i);
   const sumF = fleets.reduce((s, f) => s + f.prem, 0);
   const secs = fleets.map(f => ({ s: f.name + ' (' + f.count + ' vehicles)', prop: +f.prem }));
-  if (cover && cover - sumF > 1) secs.push({ s: 'Other vehicle cover', prop: +(cover - sumF).toFixed(2) });
+  if (cover && cover - sumF > 1) secs.push({ s: 'Other cover', prop: +(cover - sumF).toFixed(2) });
   if (sasria) secs.push({ s: 'SASRIA', prop: sasria });
   if (fees) secs.push({ s: 'Broker / admin fee', prop: fees });
-  if (!secs.length && grand) secs.push({ s: 'Motor & vehicle cover', prop: grand });
+  if (!secs.length && grand) secs.push({ s: 'Cover premium', prop: grand });
   // Fallback for any other insurer layout: the headline total premium, with
   // SASRIA split out when it can be read cleanly.
   if (!secs.length) {
     const tot = fleetTotalPremium(text);
     if (tot) {
       const sas = fleetSasria(text, tot);
-      if (sas) { secs.push({ s: 'Motor & vehicle cover', prop: +(tot - sas).toFixed(2) }); secs.push({ s: 'SASRIA', prop: sas }); }
-      else secs.push({ s: 'Total fleet premium', prop: tot });
+      if (sas) { secs.push({ s: 'Cover premium', prop: +(tot - sas).toFixed(2) }); secs.push({ s: 'SASRIA', prop: sas }); }
+      else secs.push({ s: 'Total premium', prop: tot });
     }
   }
   return { secs, grand: grand || (sumF + (sasria || 0) + (fees || 0)) };
@@ -1037,15 +1051,14 @@ function looksFleetish() {
   [/\bfleet\b/, /number of vehicles/, /motor schedule/, /vehicle schedule/, /private vehicles/, /heavy commercial vehicle/, /total fleet value/, /comprehensive[^.]{0,25}vehicle/, /fleetb(?:ü|u)ddy/].forEach(re => { if (re.test(t)) h++; });
   return h >= 2;
 }
-function fleetSeed() {
-  // The client type is the router: fleet reader runs ONLY when the RM selected
-  // "Large Vehicle Fleets". Everything else reads as commercial property — so a
-  // property portfolio can never be mis-read as a fleet again.
-  if (!/vehicle fleet/i.test(state.client.type || '')) return false;
-  if (state.buildings.some(b => b.__fleet)) return true; // already fleet-seeded
+// Generic premium reader — used as a fallback when the detailed section reader
+// finds nothing (a quote whose layout it doesn't recognise). Reads the headline
+// premiums (total + SASRIA) so the comparison still works for any insurer.
+function genericSeed() {
+  if (state.buildings.some(b => b.__generic)) return true;
   const client = (state.client.name || '').trim();
-  if (!state.buildings.length) state.buildings.push(newBuilding(client ? (client + ' — vehicle fleet') : 'Vehicle fleet'));
-  const bld = state.buildings[0]; bld.__fleet = true;
+  if (!state.buildings.length) state.buildings.push(newBuilding(client || 'Cover comparison'));
+  const bld = state.buildings[0]; bld.__generic = true;
   // Normalise everything to a monthly basis so the comparison is apples-to-apples:
   // if a quote states premiums per year, divide by 12.
   let curTotal = null, converted = false;
@@ -1068,8 +1081,8 @@ function fleetSeed() {
     q.lines = [];
     // Always give the RM a clear place for the client's current premium (pre-filled
     // if the schedule stated it; blank for them to type otherwise).
-    q.lines.push({ id: uid(), s: 'Current fleet premium (as billed)', curL: '', cur: curTotal, propL: '', prop: null, propNq: true, curStr: '', propStr: 'n/a' });
-    const secs = parsed.secs.length ? parsed.secs : [{ s: 'Motor & vehicle cover', prop: null }];
+    q.lines.push({ id: uid(), s: 'Current premium (as billed)', curL: '', cur: curTotal, propL: '', prop: null, propNq: true, curStr: '', propStr: 'n/a' });
+    const secs = parsed.secs.length ? parsed.secs : [{ s: 'Total premium', prop: null }];
     secs.forEach(s => q.lines.push({ id: uid(), s: s.s, curL: '', cur: null, propL: '', prop: (annual && s.prop != null) ? +(s.prop / 12).toFixed(2) : s.prop, curStr: '', propStr: '' }));
     if (converted) q.advisories = 'Premiums stated per year on a quote are shown here per month (÷12). Confirm the basis of every figure before presenting.';
     state.quotes.push(q);
@@ -1079,7 +1092,6 @@ function fleetSeed() {
 }
 
 function seedFromFiles() {
-  if (fleetSeed()) return; // motor-fleet policies use a separate reader
   // Buildings: one per XLSX sheet, or one per distinct schedule-PDF building
   // name (two schedules for the same building — e.g. Bryte + AIG — dedupe).
   if (!state.buildings.length) {
@@ -1168,10 +1180,11 @@ function seedFromFiles() {
   // the client type to match — rescues the case where the type was left wrong.
   const gotFigures = state.quotes.some(q => (q.lines || []).some(l => l.prop != null || l.cur != null))
     || state.buildings.some(b => b.si);
-  if (!gotFigures && looksFleetish()) {
+  if (!gotFigures) {
+    // The detailed section reader found nothing (a layout it doesn't recognise) —
+    // fall back to the generic headline-premium reader so the comparison still works.
     state.buildings.length = 0; state.quotes.length = 0;
-    if (!/vehicle fleet/i.test(state.client.type || '')) state.client.type = 'Large Vehicle Fleets';
-    fleetSeed();
+    genericSeed();
     return;
   }
   state.seeded = true; save();
@@ -1292,17 +1305,10 @@ function screenUpload() {
         el('div', { class: 'grid3' },
           el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Client / group name'),
             el('input', { value: c.name, placeholder: 'Client or group name', onInput: bind('name') })),
-          el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Client type'),
-            (() => { const s = el('select', { class: 'inp' });
-              CLIENT_TYPES.forEach(t => s.append(el('option', { value: t.name, selected: t.name === c.type }, t.name)));
-              s.onchange = () => { c.type = s.value; state.seeded = false; save(); render(); };
-              return s; })()),
+          el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Class of business'),
+            el('input', { value: 'Commercial Insurance', disabled: true, style: 'color:var(--color-text-muted,#5E6675);background:var(--ink-25,#FAFBFC)' })),
           el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Renewal date'),
             el('input', { type: 'date', value: c.renewal, onInput: bind('renewal') }))),
-        (() => { const t = CLIENT_TYPES.find(x => x.name === c.type);
-          return t ? el('div', { class: 'note', style: 'margin-top:12px' }, el('span', { class: 'dot' }, '•'),
-            el('span', {}, el('b', {}, t.name + ' — '), t.desc
-              + (/vehicle fleet/i.test(t.name) ? '  The reader will read fleet premiums (vehicles, SASRIA, fees).' : '  Read line-by-line as commercial property cover.'))) : null; })(),
       ),
     ),
     el('div', { class: 'panels', style: 'margin-top:20px' },
@@ -1415,34 +1421,81 @@ function quoteBlock(b, q) {
     ),
   );
 }
+// Align every quote in a building to the same sections and keep Current in sync,
+// so the review shows one Current column with a Proposed column per insurer.
+function normalizeLines(b) {
+  const qs = quotesOf(b);
+  const order = [], seen = new Set();
+  qs.forEach(q => (q.lines || []).forEach(l => { const k = secKey(l.s); if (!seen.has(k)) { seen.add(k); order.push({ key: k, label: l.s }); } }));
+  qs.forEach(q => {
+    order.forEach(sec => { if (!q.lines.find(l => secKey(l.s) === sec.key)) q.lines.push({ id: uid(), s: sec.label, curL: '', cur: null, propL: '', prop: null, curStr: '', propStr: '' }); });
+    q.lines.sort((a, c) => order.findIndex(s => s.key === secKey(a.s)) - order.findIndex(s => s.key === secKey(c.s)));
+  });
+  order.forEach(sec => {
+    let cur = null, f = false;
+    qs.forEach(q => { const l = q.lines.find(x => secKey(x.s) === sec.key); if (l && !f && l.cur != null) { cur = l.cur; f = true; } });
+    if (f) qs.forEach(q => { const l = q.lines.find(x => secKey(x.s) === sec.key); if (l) l.cur = cur; });
+  });
+  return order;
+}
 function buildingCard(b, idx) {
   const qs = quotesOf(b);
-  const q = selQuote(b);
+  const order = normalizeLines(b);
+  const curInput = (sec) => { const l0 = qs[0].lines.find(x => secKey(x.s) === sec.key);
+    const i = el('input', { class: 'rvin r', value: l0 && l0.cur != null ? (+l0.cur).toFixed(2) : '', placeholder: '—', inputmode: 'decimal' });
+    i.onchange = () => { const v = parseMoney(i.value); qs.forEach(q => { const l = q.lines.find(x => secKey(x.s) === sec.key); if (l) l.cur = v; }); save(); render(); }; return i; };
+  const propInput = (l) => { const i = el('input', { class: 'rvin r', value: l && l.prop != null ? (+l.prop).toFixed(2) : '', placeholder: '—', inputmode: 'decimal' });
+    i.onchange = () => { if (l) { l.prop = parseMoney(i.value); l.propNq = false; } save(); render(); }; return i; };
+  const secInput = (sec) => { const lines = qs.map(q => q.lines.find(x => secKey(x.s) === sec.key));
+    const i = el('input', { class: 'rvin', value: (lines[0] || {}).s || '', placeholder: 'Cover section' });
+    i.oninput = () => { lines.forEach(l => { if (l) l.s = i.value; }); save(); }; i.onchange = () => render(); return i; };
+  const insurerInput = (q) => { const i = el('input', { class: 'rvin', style: 'font-weight:700', value: q.insurer || '', placeholder: 'Insurer' });
+    i.oninput = () => { q.insurer = i.value; save(); }; i.onchange = () => render(); return i; };
+  const curTotal = order.reduce((s, sec) => { const l = qs.length ? qs[0].lines.find(x => secKey(x.s) === sec.key) : null; return s + (l && l.cur != null ? l.cur : 0); }, 0);
+  const cheapest = qs.length > 1 ? Math.min(...qs.map(q => quoteTotals(q).prop)) : null;
   return el('div', { class: 'card' },
     el('div', { class: 'card-h' },
-      el('h2', {}, el('span', { class: 'n' }, String(idx+1).padStart(2,'0')), b.name || 'Unnamed building'),
+      el('h2', {}, el('span', { class: 'n' }, String(idx+1).padStart(2,'0')), el('input', { class: 'rvname', value: b.name || '', placeholder: 'Name', oninput: (e) => { b.name = e.target.value; save(); } })),
       el('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' },
-        el('button', { class: 'btn sm', onClick: () => { const nq = newQuote(b.id); state.quotes.push(nq); b.selQ = nq.id; save(); render(); } }, '+ Add quote'),
+        el('button', { class: 'btn sm', onClick: () => { const nq = newQuote(b.id); order.forEach(sec => { const src = qs[0] && qs[0].lines.find(x => secKey(x.s) === sec.key); nq.lines.push({ id: uid(), s: sec.label, curL: src ? src.curL : '', cur: src ? src.cur : null, propL: '', prop: null, curStr: '', propStr: '' }); }); state.quotes.push(nq); save(); render(); } }, '+ Add insurer'),
         el('button', { class: 'btn sm ghost danger', onClick: () => {
           if (confirm('Remove this building and its quotes?')) {
             state.quotes = state.quotes.filter(x => x.buildingId !== b.id);
             state.buildings = state.buildings.filter(x => x.id !== b.id); save(); render(); } } }, 'Remove'),
       )),
     el('div', { class: 'card-b' },
-      el('div', { class: 'bmeta' },
-        el('label', { class: 'field' }, el('div', { class: 'lab' }, b.__fleet ? 'Fleet / group name' : 'Building name'), textInput(b, 'name', b.__fleet ? 'e.g. Vehicle fleet' : 'Building name')),
-        el('label', { class: 'field' }, el('div', { class: 'lab' }, b.__fleet ? 'Insured business' : 'Insured entity'), textInput(b, 'entity', b.__fleet ? 'e.g. Dhoda Diesel CC' : 'Entity')),
-        el('label', { class: 'field' }, el('div', { class: 'lab' }, b.__fleet ? 'Business address (optional)' : 'Risk address'), textInput(b, 'addr', b.__fleet ? 'Head-office address' : 'Address')),
-        el('label', { class: 'field' }, el('div', { class: 'lab' }, b.__fleet ? 'Total fleet value (optional)' : 'Sum insured'), textInput(b, 'si', 'R —')),
+      qs.length === 0 ? el('p', { class: 'muted' }, 'No quotes yet — tap "+ Add insurer".') :
+      el('div', { style: 'overflow-x:auto' },
+        el('table', { class: 'rvtable' },
+          el('thead', {}, el('tr', {},
+            el('th', { style: 'min-width:160px' }, 'Cover section'),
+            el('th', { class: 'r', style: 'min-width:105px' }, 'Current / m'),
+            ...qs.map(qq => el('th', { class: 'r', style: 'min-width:125px' }, insurerInput(qq))),
+            el('th', {}))),
+          el('tbody', {},
+            order.map(sec => { const lines = qs.map(qq => qq.lines.find(x => secKey(x.s) === sec.key));
+              return el('tr', {},
+                el('td', {}, secInput(sec)),
+                el('td', { class: 'r' }, curInput(sec)),
+                ...lines.map(l => el('td', { class: 'r' }, propInput(l))),
+                el('td', {}, el('button', { class: 'x', title: 'Remove line', onClick: () => { qs.forEach(qq => { qq.lines = qq.lines.filter(x => secKey(x.s) !== sec.key); }); save(); render(); } }, '×'))); }),
+            el('tr', { class: 'tot' },
+              el('td', {}, 'Total / month'),
+              el('td', { class: 'r' }, fmtR(curTotal)),
+              ...qs.map(qq => { const t = quoteTotals(qq); const d = t.prop - curTotal;
+                return el('td', { class: 'r' + (cheapest != null && t.prop === cheapest ? ' best' : '') }, fmtR(t.prop),
+                  el('span', { class: 'savechip ' + (d < 0 ? 'rneg' : d > 0 ? 'rpos' : '') },
+                    curTotal ? (d < 0 ? '− ' + fmtR(Math.abs(d) * 12) + '/yr' : d > 0 ? '+ ' + fmtR(d * 12) + '/yr' : 'like-for-like') : '')); }),
+              el('td', {})))),
       ),
-      qs.length > 1 ? el('div', {},
-        el('div', { class: 'note', style: 'margin:12px 0 0' }, el('span', { class: 'dot' }, '•'),
-          el('span', {}, el('b', {}, qs.length + ' options'), ' — tap a tab to check each one. All ' + qs.length + ' appear side by side for the client on the ', el('b', {}, 'Client report'), ' step.')),
-        el('div', { class: 'qtabs', style: 'margin-top:10px' },
-          qs.map(x => el('button', { class: 'qtab', 'aria-current': String(x.id === (q && q.id)),
-            onClick: () => { b.selQ = x.id; save(); render(); } },
-            (x.insurer || 'Quote') + (x.quoteNo ? ' · ' + x.quoteNo : ''))))) : null,
-      q ? quoteBlock(b, q) : el('p', { class: 'muted', style: 'margin:14px 0 0' }, 'No quotes for this building yet — add one.'),
+      el('div', { style: 'display:flex;gap:8px;margin-top:12px;flex-wrap:wrap' },
+        qs.length ? el('button', { class: 'btn sm', onClick: () => { qs.forEach(qq => qq.lines.push({ id: uid(), s: '', curL: '', cur: null, propL: '', prop: null, curStr: '', propStr: '' })); save(); render(); } }, '+ Add line') : null,
+        (qs.length && order.length === 0) ? el('button', { class: 'btn sm', onClick: () => { COMMON_SECTIONS.forEach(s => qs.forEach(qq => qq.lines.push(newLine(s)))); save(); render(); } }, '+ Add common sections') : null,
+      ),
+      qs.length ? el('div', { style: 'margin-top:14px' },
+        el('label', { class: 'field' }, el('div', { class: 'lab' }, 'Advisories (one per line — appear on the report)'),
+          (() => { const t2 = el('textarea', { placeholder: 'e.g. a limit reduces — confirm before accepting.' }, qs[0].advisories || '');
+            t2.oninput = () => { qs.forEach(qq => qq.advisories = t2.value); save(); }; return t2; })())) : null,
     ),
   );
 }
