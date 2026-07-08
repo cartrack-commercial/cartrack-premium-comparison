@@ -48,6 +48,10 @@
     background: rgba(255,255,255,.1); }
   .step[aria-current="true"] .n { background: var(--orange-500, #F47735); color: #fff; }
   .spacer { flex: 1 1 auto; }
+  .home-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600;
+    color: var(--ink-300,#A8AFBC); text-decoration: none; border: 1px solid rgba(255,255,255,.15);
+    padding: 7px 12px; border-radius: 8px; white-space: nowrap; transition: color .15s, border-color .15s; }
+  .home-link:hover, .home-link:focus-visible { color: #fff; border-color: var(--orange-500,#F47735); outline: none; }
   .rm { display: flex; align-items: center; gap: 9px; background: rgba(255,255,255,.05);
     border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 5px 10px; }
   .rm .av { width: 30px; height: 30px; border-radius: 50%; background: var(--orange-500,#F47735);
@@ -367,6 +371,7 @@
     </div>
     <nav class="steps" id="steps"></nav>
     <div class="spacer"></div>
+    <a class="home-link" href="https://cartrack-commercial.github.io/" title="Back to the launcher">&#8592; Home</a>
     <div class="rm">
       <div class="av" id="rmAv">H</div>
       <div>
@@ -1728,7 +1733,7 @@ function screenWelcome(){
   return el('div',{class:'welcome'},
     el('div',{class:'wel-top'},
       el('div',{class:'b'}, 'CARTRACK ', el('span',{},'INSURANCE')),
-      el('div',{class:'meta'}, el('div',{},'Premium Comparison'), el('div',{style:'color:#7C8492'},'FSP 17266'))),
+      el('a',{class:'home-link', href:'https://cartrack-commercial.github.io/', title:'Back to the launcher'}, '← Home')),
     el('div',{class:'wel-body'},
       el('div',{class:'wel-kick'}, greetWord()+' — Commercial team'),
       el('h1',{class:'wel-h', html:'Who’s comparing <span class="accent">today?</span>'}),
