@@ -375,6 +375,123 @@
     .rm-tile { opacity:0; transform: translateY(12px); animation: rmUp .5s ease forwards; }
     @keyframes rmUp { to { opacity:1; transform:none; } }
   }
+  /* ============================================================
+     MAGIC CLIENT REPORT — branded, auto-verdict comparison.
+     Work Sans + Source Code Pro, embedded so it renders and prints
+     identically anywhere. Scoped under .cr so the rest of the app
+     (Saira / IBM Plex) is untouched.
+     ============================================================ */
+  @font-face{font-family:'Work Sans';font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/worksans-400.woff2') format('woff2');}
+  @font-face{font-family:'Work Sans';font-style:normal;font-weight:700;font-display:swap;src:url('assets/fonts/worksans-700.woff2') format('woff2');}
+  @font-face{font-family:'Source Code Pro';font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/sourcecodepro-400.woff2') format('woff2');}
+
+  .cr{ --ink:#101215; --ink-2:#39404A; --muted:#6E7681; --paper:#FBFAF8; --card:#FFFFFF;
+    --line:#EAE6DF; --line-2:#F2EFEA; --panel:#14161C; --orange:#F4772E; --orange-hi:#FF9A5A;
+    --orange-deep:#CE5C16; --green:#12936A; --green-bg:#E7F4EE; --red:#D8443C; --red-bg:#FBEAE8;
+    --blue:#2C6BB3; --blue-bg:#E8EFF7;
+    font-family:'Work Sans','Segoe UI',system-ui,-apple-system,sans-serif; color:var(--ink);
+    background:var(--paper); border-radius:14px; overflow:hidden; }
+  .cr .num{font-family:'Source Code Pro',ui-monospace,Consolas,Menlo,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+
+  /* hero */
+  .cr-hero{position:relative;background:var(--panel);color:#fff;padding:32px 34px 34px;overflow:hidden;}
+  .cr-hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(720px 360px at 88% -20%,rgba(244,119,46,.42),transparent 62%),radial-gradient(500px 300px at 4% 128%,rgba(244,119,46,.12),transparent 60%);}
+  .cr-hero>*{position:relative;z-index:1;}
+  .cr-wm{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:22px;}
+  .cr-wm .logo{font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;}
+  .cr-wm .logo b{color:var(--orange-hi);}
+  .cr-wm .ref{font-family:'Source Code Pro',monospace;font-size:10px;letter-spacing:.05em;color:#8B93A0;text-align:right;line-height:1.7;}
+  .cr-eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:'Source Code Pro',monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--orange-hi);margin-bottom:13px;}
+  .cr-eyebrow::before{content:"";width:24px;height:2px;background:var(--orange);}
+  .cr-hero h1{font-weight:700;font-size:clamp(26px,4.4vw,40px);line-height:1.03;letter-spacing:-.02em;margin:0 0 11px;text-wrap:balance;}
+  .cr-hero .lede{font-size:14px;color:#C4CAD2;max-width:60ch;line-height:1.55;}
+  .cr-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
+  .cr-chip{font-family:'Source Code Pro',monospace;font-size:10.5px;color:#E6E9ED;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 12px;}
+  .cr-chip b{color:#fff;font-weight:700;}
+
+  .cr-b{padding:28px 34px 34px;}
+  .cr-eyerow{display:flex;align-items:baseline;gap:12px;margin:0 0 14px;}
+  .cr-eyerow .k{font-family:'Source Code Pro',monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--orange-deep);}
+  .cr-eyerow h2{font-weight:700;font-size:14px;letter-spacing:.01em;text-transform:uppercase;}
+  .cr-eyerow .line{flex:1;height:1px;background:var(--line);}
+
+  /* verdict cards */
+  .cr-cards{display:grid;gap:13px;margin-bottom:16px;}
+  .cr-qc{position:relative;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px 18px 16px;overflow:hidden;}
+  .cr-qc .role{font-family:'Source Code Pro',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);}
+  .cr-qc h3{font-weight:700;font-size:19px;letter-spacing:-.01em;margin:3px 0 12px;line-height:1.1;}
+  .cr-qc .prem{font-family:'Source Code Pro',monospace;font-weight:700;font-size:26px;letter-spacing:-.02em;line-height:1;}
+  .cr-qc .per{font-family:'Source Code Pro',monospace;font-size:10.5px;color:var(--muted);margin-top:5px;}
+  .cr-qc .delta{margin-top:11px;font-size:12.5px;font-weight:600;}
+  .cr-qc .delta .save{color:var(--green);} .cr-qc .delta .base{color:var(--muted);font-weight:600;}
+  .cr-qc.win{border-color:var(--orange);box-shadow:0 0 0 2px var(--orange),0 12px 30px rgba(244,119,46,.16);}
+  .cr-qc.win::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,var(--orange-hi),var(--orange-deep));}
+  .cr-badge{position:absolute;top:13px;right:13px;font-family:'Source Code Pro',monospace;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--orange);color:#fff;padding:4px 9px;border-radius:999px;}
+
+  /* savings chart */
+  .cr-chart{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:19px 21px;margin-bottom:16px;}
+  .cr-chart .ct{font-weight:700;font-size:13.5px;margin-bottom:2px;}
+  .cr-chart .cs{font-size:11.5px;color:var(--muted);margin-bottom:15px;}
+  .cr-bar{display:grid;grid-template-columns:118px 1fr;align-items:center;gap:13px;margin-bottom:11px;}
+  .cr-bar:last-child{margin-bottom:0;}
+  .cr-bar .bl{font-weight:600;font-size:12.5px;}
+  .cr-bar .bl small{display:block;font-family:'Source Code Pro',monospace;font-size:10px;color:var(--muted);font-weight:400;}
+  .cr-bar .track{position:relative;height:32px;background:var(--line-2);border-radius:8px;overflow:hidden;}
+  .cr-bar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding-right:11px;color:#fff;font-family:'Source Code Pro',monospace;font-weight:700;font-size:12.5px;min-width:38px;}
+  .cr-bar .fill.g{background:linear-gradient(90deg,#2A2E36,#3C424C);}
+  .cr-bar .fill.o{background:linear-gradient(90deg,var(--orange-deep),var(--orange));}
+  .cr-bar .zero{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-family:'Source Code Pro',monospace;font-size:11.5px;color:var(--muted);}
+
+  /* alert */
+  .cr-alert{display:flex;gap:12px;border:1px solid var(--red);background:var(--red-bg);border-radius:14px;padding:14px 16px;margin-bottom:26px;}
+  .cr-alert svg{flex:none;width:21px;height:21px;color:var(--red);margin-top:1px;}
+  .cr-alert .at{font-weight:700;font-size:13px;margin-bottom:3px;}
+  .cr-alert p{margin:0;font-size:12.5px;line-height:1.5;color:var(--ink-2);}
+  .cr-alert b{color:var(--ink);} .cr-alert .num{color:var(--red);font-weight:700;}
+
+  /* section + table */
+  .cr-sec{margin-bottom:24px;}
+  .cr-sh{display:flex;align-items:center;gap:11px;margin-bottom:11px;}
+  .cr-sh .ic{flex:none;width:32px;height:32px;border-radius:9px;background:var(--panel);color:var(--orange-hi);display:flex;align-items:center;justify-content:center;}
+  .cr-sh .ic svg{width:17px;height:17px;}
+  .cr-sh h2{font-weight:700;font-size:16px;letter-spacing:-.01em;}
+  .cr-sh .sub{margin-left:auto;font-size:11px;color:var(--muted);font-style:italic;}
+  .cr-tw{overflow-x:auto;border:1px solid var(--line);border-radius:13px;background:var(--card);}
+  .cr table{border-collapse:collapse;width:100%;min-width:760px;font-size:12px;}
+  .cr thead th{background:var(--panel);color:#E9ECEF;text-align:left;padding:9px 12px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-right:1px solid #2A2E36;white-space:nowrap;}
+  .cr thead th.o{color:var(--orange-hi);} .cr thead th:last-child{border-right:none;}
+  .cr tbody td{padding:8px 12px;border-bottom:1px solid var(--line-2);border-right:1px solid var(--line-2);vertical-align:top;}
+  .cr tbody td:last-child{border-right:none;} .cr tbody tr:last-child td{border-bottom:none;}
+  .cr tbody tr:nth-child(even) td{background:#FCFBF9;}
+  .cr td.item{font-weight:700;color:var(--ink);width:18%;min-width:130px;}
+  .cr td.item small{display:block;font-weight:400;color:var(--muted);font-size:10.5px;margin-top:2px;}
+  .cr td.val{font-family:'Source Code Pro',monospace;font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap;width:14%;}
+  .cr td.val .n{color:var(--ink);font-weight:700;}
+  .cr td.val small{font-family:'Work Sans',sans-serif;color:var(--muted);font-size:10px;display:block;white-space:normal;margin-top:1px;letter-spacing:0;}
+  .cr td.na{color:#AAB0B8;font-style:italic;font-family:'Work Sans',sans-serif;}
+  .cr td.oc{background:#FFF7F1;} .cr tbody tr:nth-child(even) td.oc{background:#FEF3EA;}
+  .cr td.verdict{width:30%;min-width:200px;font-size:11.5px;color:var(--ink-2);line-height:1.45;}
+  .cr tr.tot td{background:#F0ECE4!important;} .cr tr.tot td.item{font-size:13px;} .cr tr.tot td.val .n{font-size:13.5px;}
+  .cr-pill{display:inline-block;font-family:'Source Code Pro',monospace;font-size:9px;letter-spacing:.02em;font-weight:700;padding:2px 8px;border-radius:999px;margin-right:6px;white-space:nowrap;background:var(--ink);color:#fff;}
+  .cr-pill.tie{background:var(--line);color:var(--ink-2);}
+  .cr-pill.up{background:var(--green-bg);color:var(--green);box-shadow:inset 0 0 0 1px var(--green);}
+  .cr-pill.gap{background:var(--red-bg);color:var(--red);box-shadow:inset 0 0 0 1px var(--red);}
+
+  /* bottom line */
+  .cr-reco{border:1px solid var(--orange);background:linear-gradient(180deg,#FFF7F1,#FFFCFA);border-radius:14px;padding:16px 18px;margin-top:4px;}
+  .cr-reco .pl{font-family:'Source Code Pro',monospace;font-weight:700;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:7px;}
+  .cr-reco p{margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-2);} .cr-reco b{color:var(--ink);}
+  .cr-fine{font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:20px;border-top:1px solid var(--line);padding-top:12px;}
+  .cr-dctl{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:9px;font-family:'Source Code Pro',monospace;font-size:9.5px;color:var(--muted);}
+
+  @media print{
+    .cr{border-radius:0;background:#fff;box-shadow:none;}
+    .cr-hero{padding:22px 24px 24px;}
+    .cr-tw{overflow:visible;break-inside:avoid;} .cr-sec,.cr-qc,.cr-chart,.cr-alert,.cr-reco{break-inside:avoid;}
+    .cr thead th{position:static;}
+  }
+
 </style>
 </head>
 <body>
@@ -1880,58 +1997,305 @@ function portfolioOptionTable() {
           ...op.options.map(o => el('td', { class: 'r' + (o.key === op.recId ? ' best' : '') }, fmtR(o.prop))))))));
 }
 
+/* ============================================================
+   MAGIC CLIENT REPORT — auto-verdict comparison renderer.
+   Reuses the existing data model (optionPortfolio / optionQuotes /
+   sectionUnion / curCellFor / quoteTotals / parseLimit / fmtLimit).
+   ============================================================ */
+function crEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+// Comma-thousands money to match the report template ("R450,735" / "R5,988.40").
+function crMoney(n, dec = 2) {
+  if (n == null || !Number.isFinite(n)) return '—';
+  const s = Math.abs(n).toFixed(dec);
+  const [i, f] = s.split('.');
+  const ii = i.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (n < 0 ? '−R' : 'R') + ii + (f ? '.' + f : '');
+}
+// Classify a cover section so the verdict knows what "winning" means.
+function crKind(label) {
+  const s = (label || '').toLowerCase();
+  if (/sasria/.test(s)) return 'sasria';
+  if (/excess/.test(s)) return 'excess';
+  if (/liabilit|third[\s-]?party|passenger|broadform|public liab|indemnit/.test(s)) return 'liability';
+  if (/sum insured|goods in transit|\bgit\b|limit of|\bcover\b/.test(s)) return 'cover';
+  return 'premium';
+}
+// Read an excess descriptor into a comparable value. "Nil"/"None"/"R0" -> 0;
+// a plain rand amount -> that amount; anything percentage-based (e.g.
+// "10% min R10,000") -> null, because those can't be compared on amount alone.
+function crExcessVal(str) {
+  if (str == null) return null;
+  const s = String(str).trim().toLowerCase();
+  if (!s) return null;
+  if (/\b(nil|none|no excess|zero)\b/.test(s) || /^r?\s*0([.,]0+)?$/.test(s)) return 0;
+  if (/%/.test(s)) return null;
+  return parseLimit(s);
+}
+// Cover-section cell text.
+function crCurTxt(l) {
+  if (!l) return '—';
+  if (l.cur == null) return l.curStr || (l.curIncl ? 'Included' : '—');
+  return l.curIncl ? 'Included' : crMoney(l.cur);
+}
+function crPropTxt(l) {
+  if (!l || l.propNq) return 'Not quoted';
+  if (l.prop == null) return l.propStr || '—';
+  return l.propIncl ? 'Included' : crMoney(l.prop);
+}
+// The heart of "magic": decide the winner of one cover line and say why.
+// Competitors are the current schedule plus every proposal option.
+function crLineVerdict(kind, curCell, cells, opts) {
+  const comp = [];
+  if (curCell && (curCell.cur != null || curCell.curL || curCell.curIncl))
+    comp.push({ who: 'Current', prem: curCell.curIncl ? 0 : curCell.cur, lim: parseLimit(curCell.curL), key: '__cur' });
+  opts.forEach((o, i) => {
+    const l = cells[i];
+    if (l && !l.propNq) comp.push({ who: o.insurer, prem: l.propIncl ? 0 : l.prop, lim: parseLimit(l.propL), key: o.key });
+  });
+  const cell = (pills, txt) => el('td', { class: 'verdict' }, ...pills, txt);
+  const pill = (cls, t) => el('span', { class: 'cr-pill' + (cls ? ' ' + cls : '') }, t);
+  const names = arr => [...new Set(arr.map(c => c.who))].join(' & ');
+
+  if (kind === 'sasria')
+    return cell([pill('tie', 'Statutory')], 'A fixed government tariff — effectively equal across all; not a decision factor.');
+
+  if (kind === 'liability' || kind === 'cover') {
+    const lim = comp.filter(c => c.lim != null);
+    if (lim.length) {
+      const best = Math.max(...lim.map(c => c.lim));
+      const winners = lim.filter(c => c.lim === best);
+      const curLim = curCell ? parseLimit(curCell.curL) : null;
+      const propBest = Math.max(...lim.filter(c => c.key !== '__cur').map(c => c.lim).concat([-1]));
+      const improves = curLim != null && propBest > curLim + 0.5;
+      const pills = [];
+      if (improves) pills.push(pill('up', 'Cover ↑'));
+      const allProp = winners.every(w => w.key !== '__cur') && winners.length === opts.length && opts.length > 1;
+      pills.push(allProp ? pill('tie', names(winners)) : pill('', names(winners)));
+      let txt = names(winners) + (winners.length > 1 ? ' carry' : ' carries') + ' the highest limit at ' + fmtLimit(best);
+      if (improves) {
+        const mult = curLim > 0 ? propBest / curLim : null;
+        txt += (mult && mult >= 1.5) ? ' — ' + (Math.round(mult * 10) / 10) + '× the current ' + fmtLimit(curLim) + '.'
+                                     : ' vs the current ' + fmtLimit(curLim) + '.';
+      } else txt += '.';
+      return cell(pills, txt);
+    }
+  }
+
+  if (kind === 'excess') {
+    const items = [];
+    if (curCell) items.push({ who: 'Current', v: crExcessVal(curCell.curStr || curCell.curL) });
+    opts.forEach((o, i) => { const l = cells[i]; if (l && !l.propNq) items.push({ who: o.insurer, v: crExcessVal(l.propStr || l.propL) }); });
+    const nils = items.filter(x => x.v === 0);
+    if (nils.length && !nils.some(x => x.who === 'Current'))
+      return cell([pill('', names(nils))], names(nils) + (nils.length > 1 ? ' carry' : ' carries') + ' no excess on this line — the strongest position at claim stage.');
+    const known = items.filter(x => x.v != null);
+    if (items.length && items.every(x => x.v != null)) {
+      const best = Math.min(...items.map(x => x.v));
+      const winners = items.filter(x => x.v === best);
+      return cell([pill('', names(winners))], names(winners) + ' has the lowest excess (' + (best === 0 ? 'nil' : fmtLimit(best)) + ') on this line.');
+    }
+    return cell([pill('tie', 'Compare wording')], 'Excess terms differ in basis (percentage vs fixed) — compare the policy wording before deciding.');
+  }
+
+  // premium line — lowest monthly premium wins
+  const pr = comp.filter(c => c.prem != null);
+  if (!pr.length) return cell([pill('gap', 'Gap')], 'Not quoted by the compared options — flag to the client.');
+  if (pr.length === 1) {
+    if (pr[0].key === '__cur') return cell([pill('gap', 'Gap')], 'Only the current schedule covers this line — the proposals did not quote it. Flag to the client.');
+    return cell([pill('', pr[0].who)], 'Only ' + pr[0].who + ' prices this line' + (pr[0].prem === 0 ? ' — at no charge.' : ', at ' + crMoney(pr[0].prem) + '/mo.'));
+  }
+  const best = Math.min(...pr.map(c => c.prem));
+  const winners = pr.filter(c => c.prem === best);
+  const curPrem = curCell ? (curCell.curIncl ? 0 : curCell.cur) : null;
+  const pills = [pill('', names(winners))];
+  let txt = names(winners) + (winners.length > 1 ? ' are' : ' is') + ' lowest at ' + (best === 0 ? 'no charge' : crMoney(best) + '/mo');
+  if (curPrem != null && best < curPrem - 0.5 && !winners.some(w => w.key === '__cur'))
+    txt += ' — ' + crMoney(curPrem - best) + '/mo under the current premium.';
+  else txt += '.';
+  return cell(pills, txt);
+}
+
+// Largest limit increase across the whole comparison — drives the cover alert.
+function crBiggestUpgrade(buildings) {
+  let top = null;
+  for (const b of buildings) {
+    const opts = optionQuotes(b);
+    sectionUnion(opts).forEach(sec => {
+      const curCell = curCellFor(opts, sec.key);
+      const curLim = curCell ? parseLimit(curCell.curL) : null;
+      if (curLim == null) return;
+      let best = -1, names = [];
+      opts.forEach(q => { const l = q.lines.find(x => secKey(x.s) === sec.key); const pl = l && !l.propNq ? parseLimit(l.propL) : null;
+        if (pl != null) { if (pl > best) { best = pl; names = [q.insurer || 'Cartrack']; } else if (pl === best) names.push(q.insurer || 'Cartrack'); } });
+      if (best > curLim + 0.5) {
+        const gain = best - curLim;
+        if (!top || gain > top.gain) top = { label: sec.label, curLim, best, gain, names: [...new Set(names)], mult: curLim > 0 ? best / curLim : null };
+      }
+    });
+  }
+  return top;
+}
+
+function crVerdictCards(op) {
+  const cards = [el('div', { class: 'cr-qc' },
+    el('div', { class: 'role' }, 'Current schedule'),
+    el('h3', {}, 'Current cover'),
+    el('div', { class: 'prem num' }, crMoney(op.cur, 0)),
+    el('div', { class: 'per' }, 'per month · in force'),
+    el('div', { class: 'delta' }, el('span', { class: 'base' }, 'The benchmark')))];
+  op.options.forEach((o, i) => {
+    const isRec = o.key === op.recId && op.options.length > 1;
+    const save = op.cur - o.prop;
+    cards.push(el('div', { class: 'cr-qc' + (isRec ? ' win' : '') },
+      isRec ? el('span', { class: 'cr-badge' }, 'Recommended') : null,
+      el('div', { class: 'role' }, 'Proposal ' + (i + 1)),
+      el('h3', {}, o.insurer || 'Cartrack'),
+      el('div', { class: 'prem num' }, crMoney(o.prop, 0)),
+      el('div', { class: 'per' }, 'per month' + (isRec ? ' · lowest total' : '')),
+      el('div', { class: 'delta' }, op.cur ? (save > 0.5
+        ? el('span', { class: 'save' }, '−' + crMoney(save, 0) + '/mo · ≈ ' + crMoney(save * 12, 0) + '/yr')
+        : el('span', { class: 'base' }, save < -0.5 ? '+' + crMoney(-save, 0) + '/mo vs current' : 'like-for-like')) : el('span', { class: 'base' }, ' '))));
+  });
+  return el('div', {},
+    el('div', { class: 'cr-eyerow' }, el('span', { class: 'k' }, 'At a glance'), el('h2', {}, 'The options'), el('span', { class: 'line' })),
+    el('div', { class: 'cr-cards', style: 'grid-template-columns:repeat(' + (op.options.length + 1) + ',1fr)' }, ...cards));
+}
+
+function crSavingsChart(op) {
+  const rows = op.options.map(o => ({ name: o.insurer || 'Cartrack', prop: o.prop, save: op.cur - o.prop, rec: o.key === op.recId }))
+    .sort((a, b) => b.save - a.save);
+  const maxSave = Math.max(1, ...rows.map(r => r.save));
+  const bars = rows.map(r => el('div', { class: 'cr-bar' },
+    el('div', { class: 'bl' }, r.name, el('small', {}, crMoney(r.prop, 0) + '/mo')),
+    el('div', { class: 'track' }, r.save > 0.5
+      ? el('div', { class: 'fill ' + (r.rec ? 'o' : 'g'), style: 'width:' + Math.max(8, r.save / maxSave * 100) + '%' }, '−' + crMoney(r.save, 0))
+      : el('span', { class: 'zero' }, r.save < -0.5 ? '+' + crMoney(-r.save, 0) : 'like-for-like'))));
+  bars.push(el('div', { class: 'cr-bar' },
+    el('div', { class: 'bl' }, 'Current', el('small', {}, crMoney(op.cur, 0) + '/mo')),
+    el('div', { class: 'track' }, el('span', { class: 'zero' }, 'R0 · the benchmark'))));
+  return el('div', { class: 'cr-chart' },
+    el('div', { class: 'ct' }, 'Monthly saving versus the current policy'),
+    el('div', { class: 'cs' }, 'Bars show how much each proposal saves against the current premium each month.'),
+    ...bars);
+}
+
+function crAlert(up) {
+  const who = up.names.length > 1 ? 'The proposals' : up.names[0];
+  const multTxt = up.mult && up.mult >= 1.5 ? Math.round(up.mult * 10) / 10 + '× the current cover' : 'more than today';
+  return el('div', { class: 'cr-alert' },
+    el('span', { html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>' }),
+    el('div', {},
+      el('div', { class: 'at' }, 'The biggest difference isn’t the price — it’s the ' + up.label.toLowerCase() + ' limit.'),
+      el('p', { html: 'The current schedule carries <span class="num">' + fmtLimit(up.curLim) + '</span> on ' + crEsc(up.label.toLowerCase())
+        + '. <b>' + crEsc(who) + ' raise' + (up.names.length > 1 ? '' : 's') + ' this to <span class="num">' + fmtLimit(up.best) + '</span></b> — ' + multTxt + ', a material upgrade.' })));
+}
+
+function crBuildingSection(b, opts, recId, idx) {
+  const secs = sectionUnion(opts);
+  const rows = secs.map(sec => {
+    const curCell = curCellFor(opts, sec.key);
+    const cells = opts.map(q => q.lines.find(x => secKey(x.s) === sec.key) || null);
+    return { sec, curCell, cells };
+  });
+  const totals = opts.map(q => quoteTotals(q));
+  const curTotal = rows.reduce((s, r) => s + (r.curCell && r.curCell.cur != null ? r.curCell.cur : 0), 0);
+  const bestTotal = Math.min(...totals.map(t => t.prop));
+  const head = el('tr', {},
+    el('th', {}, 'Cover line'),
+    el('th', {}, 'Current'),
+    ...opts.map((q, i) => el('th', { class: (q.optionId || q.id) === recId ? 'o' : '' }, (q.insurer || 'Cartrack'))),
+    el('th', {}, 'Verdict — who wins & why'));
+  const body = rows.map(r => {
+    const kind = crKind(r.sec.label);
+    return el('tr', {},
+      el('td', { class: 'item' }, r.sec.label || '—', r.curCell && r.curCell.curL ? el('small', {}, 'was ' + r.curCell.curL) : null),
+      el('td', { class: 'val' }, el('span', { class: 'n' }, crCurTxt(r.curCell))),
+      ...opts.map((q, i) => {
+        const l = r.cells[i], rec = (q.optionId || q.id) === recId;
+        return el('td', { class: 'val' + (rec ? ' oc' : '') }, el('span', { class: 'n' }, crPropTxt(l)),
+          l && l.propL ? el('small', {}, l.propL) : null);
+      }),
+      crLineVerdict(kind, r.curCell, r.cells, opts.map(q => ({ key: q.optionId || q.id, insurer: q.insurer || 'Cartrack' }))));
+  });
+  const totRow = el('tr', { class: 'tot' },
+    el('td', { class: 'item' }, 'Total / month'),
+    el('td', { class: 'val' }, el('span', { class: 'n' }, crMoney(curTotal))),
+    ...totals.map((t, i) => el('td', { class: 'val' + ((opts[i].optionId || opts[i].id) === recId ? ' oc' : '') },
+      el('span', { class: 'n' }, crMoney(t.prop)))),
+    el('td', { class: 'verdict' }, (() => {
+      const best = opts[totals.findIndex(t => t.prop === bestTotal)];
+      const name = best ? (best.insurer || 'Cartrack') : '';
+      const save = curTotal - bestTotal;
+      return el('span', {}, el('span', { class: 'cr-pill' }, name), save > 0.5 ? 'Lowest total — ' + crMoney(save) + '/mo under the current policy.' : 'Lowest total premium.');
+    })()));
+  const title = b.name && !/^premium comparison$/i.test(b.name) ? b.name : 'Cover comparison';
+  const sub = [b.entity, b.si ? 'Sum insured ' + b.si : '', opts.length + ' proposal' + (opts.length > 1 ? 's' : '')].filter(Boolean).join(' · ');
+  return el('div', { class: 'cr-sec' },
+    el('div', { class: 'cr-sh' },
+      el('span', { class: 'ic', html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 12 3l9 5v8l-9 5-9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>' }),
+      el('h2', {}, title),
+      sub ? el('span', { class: 'sub' }, sub) : null),
+    el('div', { class: 'cr-tw' }, el('table', {}, el('thead', {}, head), el('tbody', {}, ...body, totRow))));
+}
+
+function crReco(op, up, rm) {
+  const rec = op.options.find(o => o.key === op.recId);
+  const parts = [];
+  if (rec && op.options.length > 1) {
+    const save = op.cur - rec.prop;
+    parts.push('<b>' + crEsc(rec.insurer || 'Cartrack') + '</b> is the lowest total at <b>' + crMoney(rec.prop, 0) + '/month</b>'
+      + (save > 0.5 ? ' — ' + crMoney(save, 0) + '/month (≈ ' + crMoney(save * 12, 0) + '/year) less than the current ' + crMoney(op.cur, 0) + '.' : '.'));
+  } else if (rec) {
+    const save = op.cur - rec.prop;
+    parts.push('The proposed premium is <b>' + crMoney(rec.prop, 0) + '/month</b>'
+      + (save > 0.5 ? ', ' + crMoney(save * 12, 0) + '/year less than the current ' + crMoney(op.cur, 0) + '.' : '.'));
+  }
+  if (up) parts.push('It also lifts <b>' + crEsc(up.label.toLowerCase()) + '</b> cover to ' + fmtLimit(up.best)
+    + (up.mult && up.mult >= 1.5 ? ' (' + (Math.round(up.mult * 10) / 10) + '× the current limit)' : '') + ' — the most valuable improvement on the table.');
+  parts.push('Each cover line is compared above with the winning option and the reason. Confirm any not-quoted lines and final terms before presenting.');
+  return el('div', { class: 'cr-reco' },
+    el('div', { class: 'pl' }, 'Recommendation'),
+    el('p', { html: parts.join(' ') }));
+}
+
 function screenReport() {
   const rm = RMS.find(r => r.id === state.rmId) || RMS[0];
-  const p = portfolio();
-  const multi = isMultiOption();
+  const op = optionPortfolio();
+  const withQuotes = state.buildings.filter(b => optionQuotes(b).length);
   const today = new Date().toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
-  const withQuotes = state.buildings.filter(b => { const q = selQuote(b); return q && q.lines.length; });
+  const up = crBiggestUpgrade(withQuotes);
+  const chips = [
+    state.buildings.length > 1 ? el('span', { class: 'cr-chip' }, 'Risks ', el('b', {}, String(withQuotes.length))) : null,
+    op.options.length ? el('span', { class: 'cr-chip' }, 'Options ', el('b', {}, String(op.options.length))) : null,
+    state.client.renewal ? el('span', { class: 'cr-chip' }, 'Renews ', el('b', {}, state.client.renewal)) : null,
+    el('span', { class: 'cr-chip' }, 'Prepared ', el('b', {}, today)),
+  ].filter(Boolean);
   return el('div', {},
     el('div', { class: 'eyebrow' }, 'Step 03'),
     el('h1', { class: 'pg' }, 'Client report'),
-    el('p', { class: 'lede' }, 'A printable comparison for the client. Print to PDF from the button below — the page furniture is stripped automatically.'),
-    el('div', { class: 'sheet' },
-      el('div', { class: 'rhead' },
-        el('div', { class: 'sheet-mast' },
-          el('img', { src: 'assets/logos/cartrack-insurance-horizontal-white.png', alt: 'Cartrack Insurance' }),
-          el('div', { class: 'doc' }, 'Premium Comparison', el('br'), el('span', { class: 'd2' }, today))),
-        el('div', { class: 'rband' }),
-        el('div', { class: 'rcover' },
-          el('div', { class: 'pf' }, 'Prepared for'),
-          el('h1', { class: 'rt' }, state.client.name || 'Premium comparison'),
-          el('div', { class: 'rsub' },
-            [state.client.type, state.client.renewal ? 'Renews ' + state.client.renewal : '',
-             'Prepared by ' + rm.name + ' · Cartrack Insurance'].filter(Boolean).join('  ·  ')))),
-      el('div', { class: 'sheet-b' },
-        multi ? reportSummaryMulti() : reportSummary(withQuotes, p),
-        multi
-          ? (withQuotes.length > 1 ? portfolioOptionTable() : null)
-          : (withQuotes.length > 1 ? el('div', {},
-          el('h3', { style: 'margin-top:0' }, 'Portfolio summary'),
-          el('table', { class: 'rtable' },
-            el('thead', {}, el('tr', {},
-              el('th', {}, 'Building'), el('th', {}, 'Proposed insurer'),
-              el('th', { class: 'r' }, 'Current R/m'), el('th', { class: 'r' }, 'Proposed R/m'), el('th', { class: 'r' }, 'Δ / month'))),
-            el('tbody', {},
-              withQuotes.map(b => { const q = selQuote(b); const t = quoteTotals(q);
-                return el('tr', {},
-                  el('td', {}, b.name), el('td', {}, q.insurer || 'Cartrack'),
-                  el('td', { class: 'r' }, fmtR(t.cur)), el('td', { class: 'r' }, fmtR(t.prop)),
-                  el('td', { class: 'r ' + (t.delta < 0 ? 'rneg' : t.delta > 0 ? 'rpos' : '') }, fmtR(t.delta, true))); }),
-              el('tr', { class: 'tot' },
-                el('td', {}, 'Portfolio total'), el('td', {}),
-                el('td', { class: 'r' }, fmtR(p.cur)), el('td', { class: 'r' }, fmtR(p.prop)),
-                el('td', { class: 'r ' + (p.delta < 0 ? 'rneg' : p.delta > 0 ? 'rpos' : '') }, fmtR(p.delta, true))),
-            ))) : null),
-        withQuotes.map(b => reportBuilding(b)),
-        el('div', { class: 'sig' },
-          el('div', { class: 'who' }, el('b', {}, rm.name), el('span', {}, rm.role + ' · Cartrack Insurance')),
-          el('div', { class: 'who', style: 'text-align:right' }, el('b', {}, 'Prepared ' + today),
-            el('span', {}, 'Comparison of quoted monthly premiums'))),
-        el('div', { class: 'fineprint' },
-          'Figures are captured from insurer schedules and quotations by the Relationship Manager and are subject to the terms, conditions and exclusions of the underlying policy documents, which prevail over this summary. E&OE. This document is a premium comparison and does not itself constitute advice or an offer of cover.'),
-      ),
-    ),
+    el('p', { class: 'lede' }, 'A client-ready comparison — the per-line verdicts and the recommendation are generated automatically. Print to PDF from the button below; page furniture is stripped.'),
+    el('div', { class: 'cr' },
+      el('header', { class: 'cr-hero' },
+        el('div', { class: 'cr-wm' },
+          el('div', { class: 'logo', html: 'Cartrack <b>Insurance</b>' }),
+          el('div', { class: 'ref' }, 'Commercial Division · FSP 17266', el('br'), 'Prepared by ' + rm.name)),
+        el('div', { class: 'cr-eyebrow' }, 'Premium Comparison'),
+        el('h1', {}, state.client.name || 'Premium comparison'),
+        el('p', { class: 'lede' }, 'Current cover measured against ' + (op.options.length > 1 ? op.options.length + ' market proposals' : 'the Cartrack proposal')
+          + ' — line by line, with a clear verdict on every section.'),
+        chips.length ? el('div', { class: 'cr-chips' }, ...chips) : null),
+      el('div', { class: 'cr-b' },
+        crVerdictCards(op),
+        op.options.length ? crSavingsChart(op) : null,
+        up ? crAlert(up) : null,
+        ...withQuotes.map((b, i) => crBuildingSection(b, optionQuotes(b), op.recId, i)),
+        crReco(op, up, rm),
+        el('div', { class: 'cr-fine' },
+          'Prepared by Cartrack Insurance Agency (Pty) Ltd (FSP 17266) for ' + (state.client.name || 'the client') + '. Figures are captured from insurer schedules and quotations and are subject to the terms, conditions and exclusions of the underlying policy documents, which prevail over this summary. E&OE. This is a premium comparison and does not itself constitute advice or an offer of cover.',
+          el('div', { class: 'cr-dctl' },
+            el('span', {}, 'Confidential · Premium Comparison · ' + (state.client.name || '')),
+            el('span', {}, 'Prepared ' + today + ' · ' + rm.name))))),
     el('div', { class: 'bar no-print' }, el('div', { class: 'bar-in' },
       el('button', { class: 'btn', onClick: () => go('review') }, '← Review'),
       el('div', { style: 'flex:1' }),

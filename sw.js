@@ -1,12 +1,15 @@
 /* Service worker — enables home-screen install and offline viewing.
    Strategy: network-first, falling back to cache. The freshest tool.html is
    always served when online; the cached shell only kicks in offline. */
-const CACHE = 'ct-compare-shell-v24';
+const CACHE = 'ct-compare-shell-v25';
 const SHELL = [
   './tool.html',
   './manifest.webmanifest',
   './assets/logos/cartrack-insurance-horizontal-white.png',
   './assets/logos/cartrack-insurance-mark.png',
+  './assets/fonts/worksans-400.woff2',
+  './assets/fonts/worksans-700.woff2',
+  './assets/fonts/sourcecodepro-400.woff2',
 ];
 
 self.addEventListener('install', (e) => {
