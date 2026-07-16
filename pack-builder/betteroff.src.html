@@ -1,0 +1,115 @@
+<meta charset="utf-8">
+<style>
+/*FONTS*/
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#101215;--ink2:#39404a;--muted:#6e7681;--paper:#fbfaf8;--card:#fff;--line:#eae6df;--line2:#f2efea;
+ --panel:#1a1d24;--orange:#f4772e;--orange-hi:#ff9a5a;--orange-deep:#ce5c16;--green:#12936a;--green-bg:#e7f4ee;--red:#d8443c;--red-bg:#fbeae8;--amber:#b06a12;--amber-bg:#f6eedd;--blue:#2f6db0;--blue-bg:#eaf1f8}
+html,body{background:#e9e6df}
+.page{width:794px;min-height:1123px;margin:0 auto;background:var(--paper);font-family:'Work Sans',system-ui,sans-serif;color:var(--ink);font-size:12px;line-height:1.42;page-break-after:always;display:flex;flex-direction:column}
+.num{font-family:'Source Code Pro',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.hero{position:relative;background:var(--panel);color:#fff;padding:17px 34px 17px;overflow:hidden}
+.hero::before{content:"";position:absolute;width:420px;height:300px;right:-90px;top:-120px;border-radius:50%;background:radial-gradient(circle,rgba(244,119,46,.4),transparent 62%)}
+.hero>*{position:relative}
+.logo{height:31px;margin-bottom:11px}
+.eye{display:inline-flex;align-items:center;gap:9px;font-family:'Source Code Pro',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--orange-hi);font-weight:700;margin-bottom:8px}
+.eye::before{content:"";width:22px;height:2px;background:var(--orange)}
+.hero h1{font-weight:700;font-size:24px;letter-spacing:-.02em;line-height:1.05}
+.hero h1 b{color:var(--orange-hi)}
+.hero .sub{font-size:12px;color:#c4cad2;margin-top:6px;max-width:70ch;line-height:1.5}
+.body{padding:15px 34px 17px;flex:1}
+/* stat band */
+.stats{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.stat{flex:1;padding:10px 15px;border-right:1px solid var(--line)}.stat:last-child{border-right:none}
+.stat.hl{background:var(--green-bg)}.stat.warn{background:var(--amber-bg)}
+.stat .l{font-family:'Source Code Pro',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat .v{font-family:'Source Code Pro',monospace;font-weight:700;font-size:19px;margin-top:3px}
+.stat .v.g{color:var(--green)}.stat .v.a{color:var(--amber)}
+.stat .s{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+.sh{display:flex;align-items:baseline;gap:9px;border-bottom:1.5px solid var(--ink);padding-bottom:4px;margin:14px 0 10px}
+.sh .ic{font-size:15px}.sh h2{font-weight:700;font-size:16px}
+.pt{display:flex;gap:11px;margin-bottom:8px;break-inside:avoid}
+.pt .k{flex:none;width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Source Code Pro',monospace;font-weight:700;font-size:12px;color:#fff}
+.pt.up .k{background:var(--green)}.pt.why .k{background:var(--panel);color:var(--orange-hi)}
+.pt .t{font-size:12.5px;color:var(--ink2);line-height:1.5}
+.pt .t .hd{font-weight:700;color:var(--ink);font-size:13px}
+.mono{font-family:'Source Code Pro',monospace;font-weight:700;color:var(--ink)}
+.g{color:var(--green);font-weight:700}.r{color:var(--red);font-weight:700}
+.callout{border:1px solid var(--line);border-left:3px solid var(--amber);background:var(--amber-bg);border-radius:0 10px 10px 0;padding:9px 14px;margin-top:6px;font-size:12px;line-height:1.5;color:var(--ink2)}
+.callout b{color:var(--ink)}
+.bottom{border:1px solid var(--orange);background:linear-gradient(180deg,#fff7f1,#fffcfa);border-radius:12px;padding:12px 17px;margin-top:12px}
+.bottom .pl{font-family:'Source Code Pro',monospace;font-weight:700;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:5px}
+.bottom p{font-size:13px;line-height:1.55;color:var(--ink2)}.bottom b{color:var(--ink)}
+.foot{border-top:1px solid var(--line);margin-top:11px;padding-top:8px;font-size:9.5px;color:var(--muted);line-height:1.5}
+@page{size:A4;margin:0}
+</style>
+
+<!-- ============ 39 EMPIRE ============ -->
+<div class="page">
+  <div class="hero">
+    <img class="logo" src="LOGOW">
+    <div class="eye">Advisory · Where higher premium buys a better outcome</div>
+    <h1>39 Empire Road — you pay a little more, but for <b>materially more cover</b></h1>
+    <div class="sub">The Cartrack (Western) proposal is R1,293.63/month more than the current OUTsurance policy. Here is exactly why — and why the client ends up in a stronger position.</div>
+  </div>
+  <div class="body">
+    <div class="stats">
+      <div class="stat warn"><div class="l">You pay</div><div class="v a">+R1,293.63</div><div class="s">per month vs OUTsurance</div></div>
+      <div class="stat"><div class="l">…of which Sasria</div><div class="v">+R2,657.83</div><div class="s">a fixed government charge — more than the whole increase</div></div>
+      <div class="stat hl"><div class="l">Western's own cover is</div><div class="v g">−R1,364.20</div><div class="s">per month CHEAPER on everything they actually underwrite</div></div>
+    </div>
+
+    <div class="sh"><span class="ic">🔎</span><h2>Why it looks more expensive</h2></div>
+    <div class="pt why"><div class="k">1</div><div class="t"><span class="hd">The entire increase is Sasria — and Sasria is not Western's price.</span> Sasria (riot &amp; strike cover) is set by a government pool at a fixed rate on the declared building value; every insurer charges the same rate. Western's schedule declares a slightly larger base (it builds in 10% escalation + 10% inflation), so the Sasria line runs <span class="mono">R5,947.85</span> vs OUTsurance's <span class="mono">R3,290.02</span> — <span class="r">+R2,657.83</span>. That single pass-through is <b>bigger than the whole R1,293.63 increase</b>.</div></div>
+    <div class="pt why"><div class="k">2</div><div class="t"><span class="hd">Strip Sasria out and Western is cheaper.</span> On the cover Western actually prices — buildings, fire, theft, accidental damage, fidelity, liability — they come in at <span class="mono">R7,769.91</span> vs OUTsurance's <span class="mono">R9,134.11</span>. That's <span class="g">R1,364.20/month less</span> for the underwriting itself.</div></div>
+
+    <div class="sh"><span class="ic">✓</span><h2>Where the client is genuinely better off</h2></div>
+    <div class="pt up"><div class="k">✓</div><div class="t"><span class="hd">A brand-new R25m umbrella on top of the liability.</span> OUTsurance gave R20m public liability and no umbrella. Western gives R10m public liability <b>plus a R25m umbrella layer</b> — a combined <b>R35m liability tower</b>. That's R15m more protection for a body corporate.</div></div>
+    <div class="pt up"><div class="k">✓</div><div class="t"><span class="hd">Power-surge cover more than doubled.</span> Upgraded from <span class="mono">R108,000</span> to <span class="mono">R270,000</span> — real protection for a building running solar and electronics.</div></div>
+    <div class="pt up"><div class="k">✓</div><div class="t"><span class="hd">Higher fidelity cover, for less.</span> Fidelity (trustee / managing-agent dishonesty) rises to <span class="mono">R750,000</span> and the premium <b>drops</b> from R556.59 to R108.33.</div></div>
+    <div class="pt up"><div class="k">✓</div><div class="t"><span class="hd">Lower excesses and one clean policy.</span> General claims carry a R500 first amount, and the whole book moves to a single insurer, wording and renewal — simpler claims, one point of contact.</div></div>
+
+    <div class="callout"><b>Be upfront — two things to close before binding:</b> (1) Western's BAR schedule lists only R50k security equipment, so <b>confirm the ~R4.86m solar is scheduled</b> or add it. (2) Ask Western to <b>re-base the Sasria</b> to the true building value — if it lands nearer OUTsurance's Sasria, this building becomes cheaper <i>and</i> better.</div>
+
+    <div class="bottom">
+      <div class="pl">Bottom line</div>
+      <p>The client pays <b>R1,294 more a month, but every rand of it is the Sasria pass-through.</b> On the cover Western underwrites they're <b>R1,364 cheaper</b> — and they add a <b>R25m umbrella, double the power-surge limit and higher fidelity</b>. Fix the Sasria base and confirm the solar, and 39 Empire is a straight upgrade.</p>
+    </div>
+    <div class="foot">Prepared by Cartrack Insurance Agency (Pty) Ltd (FSP 17266). Figures monthly, VAT incl., verified against the OUTsurance schedule and the 10-July Western proposal. Sasria is a statutory pass-through identical across insurers. Decision-support only; policy wordings prevail. Confirm sums insured and the solar schedule before binding. E&amp;OE.</div>
+  </div>
+</div>
+
+<!-- ============ WINSTON LANE ============ -->
+<div class="page">
+  <div class="hero">
+    <img class="logo" src="LOGOW">
+    <div class="eye">Advisory · Where higher premium buys a better outcome</div>
+    <h1>Winston Lane — <b>R226 more a month</b> for a far better claims position</h1>
+    <div class="sub">The Cartrack (Western) proposal is R226.11/month more than the current Bryte policy. It's a small increase, and it buys a real reduction in what the members pay when they claim.</div>
+  </div>
+  <div class="body">
+    <div class="stats">
+      <div class="stat warn"><div class="l">You pay</div><div class="v a">+R226.11</div><div class="s">per month · ≈ R2,713 / year</div></div>
+      <div class="stat hl"><div class="l">Excess you save at a claim</div><div class="v g">−R9,500</div><div class="s">water / general claim: R500 vs R10,000 today</div></div>
+      <div class="stat"><div class="l">Building sum insured</div><div class="v">R5.0m</div><div class="s">same cover — the rate is higher, not the limit</div></div>
+    </div>
+
+    <div class="sh"><span class="ic">🔎</span><h2>Why it's a bit more expensive</h2></div>
+    <div class="pt why"><div class="k">1</div><div class="t"><span class="hd">Western rates this small residential block a touch higher.</span> On the same R5m building the buildings premium is <span class="mono">R752.10</span> vs Bryte's <span class="mono">R366.07</span> (+R386). This is a small concrete HOA — Western's book prices it up. This is the one number to push back on.</div></div>
+    <div class="pt why"><div class="k">2</div><div class="t"><span class="hd">Two covers that were "bundled" are now spelled out and priced.</span> Access control (R180,000) is now a <b>scheduled, separately-insured item</b> (+R300) and Fidelity is a <b>stated R250,000 section</b> (+R150) — instead of sitting invisibly inside the building section. You're paying for cover that is now certain rather than assumed.</div></div>
+    <div class="pt why"><div class="k">3</div><div class="t"><span class="hd">And a lot came down.</span> Sasria (−R324), umbrella (−R65), business all risks (−R83) and the broker fee (−R96 → gone) all dropped — which is why the net increase is only R226, not R836.</div></div>
+
+    <div class="sh"><span class="ic">✓</span><h2>Where the client is genuinely better off</h2></div>
+    <div class="pt up"><div class="k">✓</div><div class="t"><span class="hd">The excess on the most likely claim drops from R10,000 to R500.</span> For a residential HOA the number-one claim is water damage / burst pipes. Today a member carries a <span class="mono">R10,000</span> first amount; on Western it's <span class="mono">R500</span>. <b>One water claim recovers roughly three-and-a-half years of the premium difference</b> — in the members' pockets, not the insurer's.</div></div>
+    <div class="pt up"><div class="k">✓</div><div class="t"><span class="hd">Access control is now actually insured.</span> The R180,000 access system is scheduled and named — if it's damaged or fails after an insured event, there's a clear, agreed limit to claim against.</div></div>
+    <div class="pt up"><div class="k">✓</div><div class="t"><span class="hd">Fidelity is a real, stated section.</span> Trustee / managing-agent dishonesty is covered to R250,000 explicitly — important protection for a self-managed HOA's funds.</div></div>
+    <div class="pt up"><div class="k">✓</div><div class="t"><span class="hd">Same R25m umbrella, cheaper — and no broker fee.</span> The R25m liability tower stays, at a lower cost, on one consolidated policy.</div></div>
+
+    <div class="callout"><b>Be upfront:</b> the building itself is rated higher for the <i>same</i> R5m cover — ask Western to sharpen that buildings rate. If they do, the increase shrinks further while keeping every one of the benefits above.</div>
+
+    <div class="bottom">
+      <div class="pl">Bottom line</div>
+      <p>Winston costs <b>R226 more a month</b> — but it turns a R10,000 excess into R500 on the claim members are most likely to make, puts a named limit on the access system, and makes fidelity a real section. <b>That is a better place for the body corporate to be, even at a slightly higher premium.</b> Push the buildings rate and it's better still.</p>
+    </div>
+    <div class="foot">Prepared by Cartrack Insurance Agency (Pty) Ltd (FSP 17266). Figures monthly, VAT incl., verified against the Bryte renewal schedule and the 10-July Western proposal. Excess comparison based on the water-damage / general first-amount-payable in each wording. Decision-support only; policy wordings prevail. E&amp;OE.</div>
+  </div>
+</div>

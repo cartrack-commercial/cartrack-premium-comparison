@@ -1,0 +1,11 @@
+import { chromium } from 'playwright';
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
+const p=await b.newPage();
+await p.goto('file://'+process.cwd()+'/cmp_p.html',{waitUntil:'networkidle'});await p.evaluate(()=>document.fonts.ready);
+const hs=await p.evaluate(()=>[...document.querySelectorAll('.page')].map(e=>Math.round(e.getBoundingClientRect().height)));
+console.log('heights',hs.join(', '),'(A4=1123)');
+await p.pdf({path:'ALW_Comparison_portrait.pdf',printBackground:true,preferCSSPageSize:true});
+const pg=await b.newPage({viewport:{width:794,height:1123},deviceScaleFactor:2});
+await pg.goto('file://'+process.cwd()+'/cmp_p.html',{waitUntil:'networkidle'});await pg.evaluate(()=>document.fonts.ready);
+const w=await pg.$$('.page'); await w[0].screenshot({path:'cp_1.png'}); await w[3].screenshot({path:'cp_strat.png'});
+await b.close();

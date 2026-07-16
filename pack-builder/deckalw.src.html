@@ -1,0 +1,182 @@
+<meta charset="utf-8"><style>
+/*FONTS*/
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#141922;--ink2:#3d4756;--muted:#8b929b;--paper:#fcfbf9;--card:#fff;--line:#e6e2da;
+ --panel:#12161d;--panel2:#1b212b;--orange:#f4772e;--orange-hi:#ff9a5a;--orange-deep:#ce5c16;--green:#16a06f;--green-hi:#3fca97;--green-bg:#e6f3ee;--red:#e0574c;--amber:#e0a53a;--soft:#f4f0e9}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;font-family:'Libre Franklin',system-ui,sans-serif;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;page-break-after:always}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.dark{background:var(--panel);color:#fff}
+.glow{position:absolute;border-radius:50%;pointer-events:none}
+.g1{width:620px;height:520px;right:-160px;top:-180px;background:radial-gradient(circle,rgba(244,119,46,.34),transparent 62%)}
+.g2{width:520px;height:420px;left:-160px;bottom:-160px;background:radial-gradient(circle,rgba(22,160,111,.16),transparent 62%)}
+.pad{position:absolute;inset:0;padding:64px 76px;display:flex;flex-direction:column}
+.logo{height:40px}
+.kick{font-size:15px;letter-spacing:.18em;text-transform:uppercase;color:var(--orange-hi);font-weight:700}
+.foot{position:absolute;left:76px;bottom:34px;font-size:13px;color:var(--muted);letter-spacing:.02em}
+.pg{position:absolute;right:76px;bottom:34px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+h1{font-weight:700;letter-spacing:-.02em;line-height:1.02}
+h2{font-weight:700;letter-spacing:-.01em;line-height:1.05}
+.chip{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.05em;padding:5px 14px;border-radius:30px}
+.sw{background:var(--green);color:#fff}.rv{background:var(--amber);color:#1a1205}
+/* title */
+.t-eyebrow{margin-top:auto}
+/* stat cards */
+.cardrow{display:flex;gap:20px}
+.card{flex:1;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 28px}
+.card.dk{background:var(--panel2);border-color:#2a323d;color:#fff}
+.card.win{background:var(--green-bg);border-color:#bfe3d1}
+.card .l{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.card.dk .l{color:#9aa3ad}
+.card .v{font-weight:700;font-size:46px;margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.card .v.g{color:var(--green)}
+.card .s{font-size:15px;color:var(--ink2);margin-top:8px}.card.dk .s{color:#c4cad2}
+/* bars */
+.bars{display:flex;flex-direction:column;gap:16px;margin-top:8px}
+.bar{display:flex;align-items:center;gap:18px}
+.bar .nm{width:230px;font-size:19px;font-weight:600}
+.bar .track{flex:1;height:26px;background:var(--soft);border-radius:13px;overflow:hidden;position:relative}
+.bar .fill{height:26px;border-radius:13px}.fill.g{background:var(--green)}.fill.r{background:var(--red)}
+.bar .amt{width:150px;text-align:right;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.amt.g{color:var(--green)}.amt.r{color:var(--red)}
+/* list */
+.big-list{display:flex;flex-direction:column;gap:22px;margin-top:10px}
+.bl{display:flex;gap:20px;align-items:flex-start}
+.bl .k{flex:none;width:46px;height:46px;border-radius:12px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
+.bl.o .k{background:var(--panel);color:var(--orange-hi)}
+.bl .tx{font-size:21px;line-height:1.4;color:var(--ink2)}.bl .tx b{color:var(--ink)}
+/* table */
+table{width:100%;border-collapse:collapse;margin-top:6px}
+th,td{padding:13px 18px;text-align:right;font-size:19px}
+th{background:var(--panel);color:#fff;font-weight:600;font-size:15px;letter-spacing:.02em}
+th.l,td.l{text-align:left}td.l{font-weight:600}
+tbody tr{border-bottom:1px solid var(--line)}
+td.num{font-variant-numeric:tabular-nums}
+td.win{background:var(--green-bg);color:var(--green);font-weight:700}
+.trtot td{background:var(--ink);color:#fff;font-weight:700;border:none}.trtot td .g{color:var(--green-hi)}
+.split{display:flex;gap:40px;flex:1}
+.half{flex:1;display:flex;flex-direction:column}
+.hh{font-size:17px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+.hh.a{color:var(--green)}.hh.b{color:var(--amber)}
+.mini{display:flex;flex-direction:column;gap:12px}
+.mi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:17px;line-height:1.35;color:var(--ink2)}.mi b{color:var(--ink)}
+</style>
+
+<!-- 1 TITLE -->
+<div class="slide dark"><div class="glow g1"></div><div class="glow g2"></div><div class="pad">
+  <img class="logo" src="LOGOW">
+  <div class="t-eyebrow kick">Insurance Review · 2026 Renewal</div>
+  <h1 style="font-size:66px;margin-top:14px;max-width:20ch">Your cover, reviewed — and a stronger way forward</h1>
+  <div style="font-size:23px;color:#c4cad2;margin-top:20px;max-width:60ch">ALW Body Corporates — five buildings, compared line by line against a single Cartrack-arranged programme with Western.</div>
+  <div style="margin-top:auto;font-size:17px;color:#8b929b">Prepared by Cartrack Insurance Agency · figures monthly, VAT included</div>
+</div></div>
+
+<!-- 2 TODAY -->
+<div class="slide"><div class="pad">
+  <div class="kick">Where you are today</div>
+  <h2 style="font-size:44px;margin-top:8px;max-width:24ch">Five buildings, split across two insurers</h2>
+  <div style="font-size:21px;color:var(--ink2);margin:18px 0 26px;max-width:70ch">That means two sets of wording, two renewal dates and two claims desks to manage — for one portfolio.</div>
+  <div class="cardrow" style="margin-top:auto;margin-bottom:auto">
+    <div class="card"><div class="l">Buildings insured</div><div class="v">5</div><div class="s">≈ R312m to rebuild</div></div>
+    <div class="card"><div class="l">Insurers today</div><div class="v">2</div><div class="s">Bryte × 4 · OUTsurance × 1</div></div>
+    <div class="card"><div class="l">You pay now</div><div class="v num">R54,504</div><div class="s">per month, all in</div></div>
+  </div>
+  <div class="foot">Cartrack Insurance · ALW Review</div><div class="pg">2</div>
+</div></div>
+
+<!-- 3 PROPOSAL -->
+<div class="slide dark"><div class="glow g1"></div><div class="pad">
+  <div class="kick">What we're proposing</div>
+  <h2 style="font-size:44px;margin-top:8px;max-width:26ch;color:#fff">One insurer, one wording, one renewal</h2>
+  <div style="font-size:21px;color:#c4cad2;margin:18px 0 26px;max-width:70ch">All five buildings on a single Western programme, arranged and managed by Cartrack — simpler to run, and stronger on cover.</div>
+  <div class="cardrow" style="margin-top:auto;margin-bottom:auto">
+    <div class="card dk"><div class="l">Proposed programme</div><div class="v num">R53,150</div><div class="s">per month · one insurer</div></div>
+    <div class="card dk"><div class="l">Liability umbrella</div><div class="v">R25m</div><div class="s">on every building</div></div>
+    <div class="card win"><div class="l">You save</div><div class="v g num">R1,354</div><div class="s">a month — about R16,246 a year</div></div>
+  </div>
+  <div class="pg" style="color:#8b929b">3</div>
+</div></div>
+
+<!-- 4 THE NUMBERS -->
+<div class="slide"><div class="pad">
+  <div class="kick">Building by building</div>
+  <h2 style="font-size:42px;margin-top:8px">What changes on each building</h2>
+  <div style="font-size:18px;color:var(--muted);margin:12px 0 20px">Monthly difference vs today — green is a saving, amber is more.</div>
+  <div class="bars" style="margin-top:auto;margin-bottom:auto">
+    <div class="bar"><div class="nm">Strategic Park N12</div><div class="track"><div class="fill g" style="width:100%"></div></div><div class="amt g num">-R1,878</div></div>
+    <div class="bar"><div class="nm">43 Empire Road</div><div class="track"><div class="fill g" style="width:34%"></div></div><div class="amt g num">-R635</div></div>
+    <div class="bar"><div class="nm">Brett Park</div><div class="track"><div class="fill g" style="width:19%"></div></div><div class="amt g num">-R361</div></div>
+    <div class="bar"><div class="nm">Winston Lane</div><div class="track"><div class="fill r" style="width:12%"></div></div><div class="amt r num">+R226</div></div>
+    <div class="bar"><div class="nm">39 Empire Road</div><div class="track"><div class="fill r" style="width:69%"></div></div><div class="amt r num">+R1,294</div></div>
+  </div>
+  <div class="foot">Three save outright; two cost a little more for better cover — next slides.</div><div class="pg">4</div>
+</div></div>
+
+<!-- 5 THREE WINS -->
+<div class="slide"><div class="pad">
+  <div class="kick">The straight savings <span class="chip sw" style="margin-left:10px">CHEAPER + BETTER</span></div>
+  <h2 style="font-size:42px;margin-top:10px">Three buildings, better cover and less cost</h2>
+  <div class="big-list" style="margin-top:26px">
+    <div class="bl"><div class="k">1</div><div class="tx"><b>Strategic Park N12 — save about R1,878/mo.</b> The R118m building re-rates ~44% lower; that one line drives the whole book's saving.</div></div>
+    <div class="bl"><div class="k">2</div><div class="tx"><b>43 Empire Road — save about R635/mo.</b> Cheaper buildings and a bigger R25m umbrella, on the same cover.</div></div>
+    <div class="bl"><div class="k">3</div><div class="tx"><b>Brett Park — save about R361/mo.</b> A strong buildings saving, with liability stepped up to R25m.</div></div>
+  </div>
+  <div style="margin-top:auto;background:var(--green-bg);border-radius:14px;padding:20px 26px;font-size:22px;font-weight:600;color:var(--ink)">Together these three save about <span class="num" style="color:var(--green)">R2,873.58</span> a month — roughly R34,483 a year.</div>
+  <div class="pg">5</div>
+</div></div>
+
+<!-- 6 TWO REFINING (price vs protection) -->
+<div class="slide"><div class="pad">
+  <div class="kick">The two that cost a little more <span class="chip rv" style="margin-left:10px">STILL WORTH MOVING</span></div>
+  <h2 style="font-size:40px;margin-top:10px">More on paper — a stronger position in practice</h2>
+  <div class="split" style="margin-top:24px">
+    <div class="half"><div class="hh b">39 Empire · +R1,294/mo</div>
+      <div class="mini">
+        <div class="mi"><b>The whole increase is Sasria</b> — a government charge every insurer bills the same.</div>
+        <div class="mi"><b>On the cover itself, Western is R1,364/mo cheaper</b> — and adds a R25m umbrella (liability goes from R20m to R35m).</div>
+        <div class="mi">We're confirming the solar and asking Western to re-base the Sasria.</div>
+      </div>
+    </div>
+    <div class="half"><div class="hh b">Winston Lane · +R226/mo</div>
+      <div class="mini">
+        <div class="mi"><b>A small residential block Western rates up</b> — we're pushing the rate down.</div>
+        <div class="mi"><b>Your claim excess drops from R10,000 to R500</b> on the most likely claim (burst pipes).</div>
+        <div class="mi">One water claim returns roughly 3½ years of the difference.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">Higher premium here buys a genuinely better outcome.</div><div class="pg">6</div>
+</div></div>
+
+<!-- 7 WHAT IMPROVES -->
+<div class="slide dark"><div class="glow g2"></div><div class="pad">
+  <div class="kick">What actually improves</div>
+  <h2 style="font-size:42px;margin-top:8px;color:#fff">Not just cheaper — broader, and simpler</h2>
+  <div class="big-list" style="margin-top:26px">
+    <div class="bl o"><div class="k">✓</div><div class="tx" style="color:#d7dbe1"><b style="color:#fff">A R25m liability umbrella on every building.</b> A far bigger safety net than today's mixed limits.</div></div>
+    <div class="bl o"><div class="k">✓</div><div class="tx" style="color:#d7dbe1"><b style="color:#fff">Lower excesses at claim time.</b> Everyday claims like burst pipes drop from a R10,000 excess to R500.</div></div>
+    <div class="bl o"><div class="k">✓</div><div class="tx" style="color:#d7dbe1"><b style="color:#fff">Cover spelled out, not assumed.</b> Fidelity and glass become their own named sections.</div></div>
+    <div class="bl o"><div class="k">✓</div><div class="tx" style="color:#d7dbe1"><b style="color:#fff">One insurer, one renewal, one claims line.</b> A single programme across all five buildings.</div></div>
+  </div>
+  <div class="pg" style="color:#8b929b">7</div>
+</div></div>
+
+<!-- 8 RECOMMENDATION -->
+<div class="slide"><div class="pad">
+  <div class="kick">Our recommendation</div>
+  <h2 style="font-size:44px;margin-top:8px;max-width:26ch">Move all five — save money and come out stronger</h2>
+  <div style="font-size:21px;color:var(--ink2);margin:18px 0 8px;max-width:78ch;line-height:1.5">Put the whole book on Western: you <b>save about R1,354 a month</b> and <b>every building keeps equal or better cover</b>. Three are straight savings; two cost a little more but buy a bigger umbrella and lower excesses. We confirm 39 Empire's solar on the schedule before it moves, and push Western on the Winston rate and the Sasria first.</div>
+  <div class="cardrow" style="margin-top:auto;margin-bottom:auto">
+    <div class="card win"><div class="l">You save</div><div class="v g num">R1,354</div><div class="s">a month · about R16,246 a year</div></div>
+    <div class="card"><div class="l">Cover</div><div class="v">R25m</div><div class="s">umbrella on every building</div></div>
+    <div class="card"><div class="l">End state</div><div class="v">1</div><div class="s">insurer · one renewal</div></div>
+  </div>
+  <div class="foot">You never trade cover for price.</div><div class="pg">8</div>
+</div></div>
+
+<!-- 9 CLOSE -->
+<div class="slide dark"><div class="glow g1"></div><div class="glow g2"></div><div class="pad">
+  <img class="logo" src="LOGOW">
+  <h1 style="font-size:58px;margin-top:auto;max-width:22ch">Shall we get the three ready to bind?</h1>
+  <div style="font-size:22px;color:#c4cad2;margin-top:18px;max-width:60ch">The quote is valid for 30 days. We'll handle the placement, the compliance checklist and the switch — you keep one simple programme.</div>
+  <div style="margin-top:auto;font-size:17px;color:#8b929b">Cartrack Insurance Agency (Pty) Ltd · FSP 17266 · Decision-support; policy wording prevails.</div>
+</div></div>
