@@ -505,11 +505,17 @@
   .cr-find.reduce .cr-fk{background:var(--red-bg);color:var(--red);box-shadow:inset 0 0 0 1px var(--red);}
   .cr-find.check .cr-fk{background:var(--blue-bg);color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue);}
   .cr-find.ok .cr-fk{background:var(--green-bg);color:var(--green);box-shadow:inset 0 0 0 1px var(--green);}
+  .cr-find.play .cr-fk{background:var(--orange);color:#fff;}
+  .cr-find.play{background:linear-gradient(180deg,#FFF7F1,#fff);}
+  .cr-find.time .cr-fk{background:#FAF0D9;color:#8A610C;box-shadow:inset 0 0 0 1px #B07D12;}
+  .cr-rm-sub{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:12px 12px 4px;border-top:1px solid var(--line-2);}
+  .cr-rm-list:first-of-type .cr-rm-sub{border-top:none;}
 
   @media print{
     .cr{border-radius:0;background:#fff;box-shadow:none;}
     .cr-hero{padding:22px 24px 24px;}
-    .cr-tw{overflow:visible;break-inside:avoid;} .cr-sec,.cr-qc,.cr-chart,.cr-alert,.cr-reco{break-inside:avoid;}
+    .cr-tw{overflow:visible;} .cr-sec,.cr-qc,.cr-chart,.cr-alert,.cr-reco,.cr-rm,.cr-find{break-inside:avoid;}
+    .cr tbody tr{break-inside:avoid;} .cr-sh,.cr-eyerow,.cr-rm-sub{break-after:avoid;}
     .cr thead th{position:static;}
   }
 
@@ -540,15 +546,25 @@
 
   <main id="app"><!-- rendered by JS --></main>
 
-<!-- Local, in-browser extraction libraries (no server; files never leave the device) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- OCR engine for scanned (image-only) PDFs — runs in the browser, loads on first use -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-
 <script type="module">
-import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs";
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs";
+/* Extraction libraries load ON DEMAND and are SELF-HOSTED, so the app shell
+   always loads — even offline or when a CDN is unreachable. Only the file you
+   drop in pulls the library it needs; nothing is fetched just to open the app.
+   (Tesseract OCR is only needed for scanned image-PDFs and is fetched then.) */
+let _pdfjs = null, _xlsx = null, _tess = null;
+function loadScript(src){ return new Promise((res, rej) => {
+  const s = document.createElement('script'); s.src = src; s.async = true;
+  s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); }); }
+async function getPdfjs(){
+  if (_pdfjs) return _pdfjs;
+  _pdfjs = await import('./assets/vendor/pdf.min.mjs');
+  _pdfjs.GlobalWorkerOptions.workerSrc = './assets/vendor/pdf.worker.min.mjs';
+  return _pdfjs;
+}
+async function getXLSX(){ if (_xlsx || window.XLSX) return (_xlsx = _xlsx || window.XLSX);
+  await loadScript('./assets/vendor/xlsx.full.min.js'); return (_xlsx = window.XLSX); }
+async function getTesseract(){ if (_tess || window.Tesseract) return (_tess = _tess || window.Tesseract);
+  await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'); return (_tess = window.Tesseract); }
 
 /* ============================================================
    Cartrack Premium Comparison — skeleton (iteration 2)
@@ -742,9 +758,9 @@ function sendToBook() {
 
 /* ---------- OCR fallback for scanned PDFs (in-browser, Tesseract) ---------- */
 async function ocrPdf(pdf, onProgress) {
-  if (typeof Tesseract === 'undefined') {
-    throw new Error('Scanned file — OCR needs an internet connection the first time. Connect and retry, or ask for a digital (text) PDF.');
-  }
+  let Tesseract;
+  try { Tesseract = await getTesseract(); }
+  catch { throw new Error('Scanned file — OCR needs an internet connection the first time. Connect and retry, or ask for a digital (text) PDF.'); }
   const worker = await Tesseract.createWorker('eng');
   let out = '';
   try {
@@ -771,6 +787,7 @@ async function extractText(file, onProgress) {
   const name = file.name.toLowerCase();
   if (name.endsWith('.pdf')) {
     const buf = await file.arrayBuffer();
+    const pdfjsLib = await getPdfjs();
     const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
     let out = '';
     for (let p = 1; p <= pdf.numPages; p++) {
@@ -791,6 +808,7 @@ async function extractText(file, onProgress) {
   }
   if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
     const buf = await file.arrayBuffer();
+    const XLSX = await getXLSX();
     const wb = XLSX.read(buf, { type: 'array' });
     // Sheet names are captured here, from the workbook itself — never from the
     // (possibly truncated) text — so every building tab is always detected.
@@ -2269,7 +2287,7 @@ function crBuildingSection(b, opts, recId, idx) {
 //     the manual rule — dearer-but-better still moves; only a genuine cover gap holds.
 // A line the CURRENT policy covers but an option did not quote (or a limit it drops).
 function crCoverFindings(withQuotes) {
-  const gaps = [], reductions = [], checks = [];
+  const gaps = [], reductions = [], checks = [], adequacy = [];
   withQuotes.forEach(b => {
     const opts = optionQuotes(b);
     sectionUnion(opts).forEach(sec => {
@@ -2290,9 +2308,19 @@ function crCoverFindings(withQuotes) {
           || opts.some(q => { const l = q.lines.find(x => secKey(x.s) === sec.key); return l && !l.propNq && /%/.test((l.propStr || l.propL || '')); });
         if (anyPct) checks.push({ sec: sec.label, building: b.name });
       }
+      if (kind === 'liability') {
+        const lims = [curCell ? parseLimit(curCell.curL) : null,
+          ...opts.map(q => { const l = q.lines.find(x => secKey(x.s) === sec.key); return l && !l.propNq ? parseLimit(l.propL) : null; })].filter(v => v != null);
+        if (lims.length) {
+          const best = Math.max(...lims);
+          const fleet = /fleet|vehicle|motor|transport/i.test((state.client.type || '') + ' ' + b.name);
+          const floor = fleet ? 10000000 : 5000000;
+          if (best < floor - 0.5) adequacy.push({ sec: sec.label, building: b.name, best, floor, fleet });
+        }
+      }
     });
   });
-  return { gaps, reductions, checks };
+  return { gaps, reductions, checks, adequacy };
 }
 
 // Count of cover lines each option leaves unquoted that the current policy holds.
@@ -2323,26 +2351,69 @@ function crRecommendId(withQuotes, options) {
 }
 
 // RM-only view: the internal findings & actions, hidden from the client copy.
-function crRmPanel(findings) {
+function crScheduleAudit() {
+  const files = (state.files && state.files.schedule) || [];
+  const text = files.map(f => (f && f.text) || '').join('\n').toLowerCase();
+  if (!text.trim()) return [];
+  const any = (...ws) => ws.some(w => text.includes(w));
+  const fleet = /fleet|vehicle|motor|transport/i.test((state.client.type || ''));
+  const out = [];
+  if (text.includes('telematics') && (text.includes('waiver') || text.includes('excess waiver'))) {
+    out.push({ sev: 'play', tag: 'The play', title: 'Telematics excess waiver is on this schedule',
+      detail: 'The underwriter waives the theft/hijack excess for an approved telematics unit. <b>Confirm Cartrack is on their approved list</b> — if it is, a Cartrack unit eliminates that excess on every vehicle (often the single biggest number on the file). If it is not, escalate to get Cartrack accredited — it applies to every risk this underwriter writes.' });
+  } else if (fleet && any('tracking', 'track and trace', 'tracking device', 'approved tracking', 'stolen vehicle recovery')) {
+    out.push({ sev: 'play', tag: 'The play', title: 'Tracking condition — Cartrack angle',
+      detail: 'The policy references tracking. Verify every vehicle has an <b>approved</b> device recorded (a blank field can mean a repudiated theft claim), and ask the underwriter whether an approved telematics unit earns an excess waiver — that is Cartrack’s to win.' });
+  }
+  if (any('profit share', 'profit-share', 'cash back', 'cash-back', 'loss ratio', 'savings fund', 'policy fund', 'reserve account', 'no claim bonus', 'no-claim bonus')) {
+    out.push({ sev: 'time', tag: 'Timing', title: 'Profit-share / savings fund detected',
+      detail: 'This policy carries a fund or cash-back mechanism. <b>Moving mid-term may forfeit the accrued reserve.</b> Time the move to renewal and disclose the forfeiture to the client in writing — a replacement-of-policy requirement, not a tactic.' });
+  }
+  if (any('finance', 'financ', 'instal', 'standard bank', 'wesbank', 'absa', 'nedbank', 'motor finance', 'asset finance', 'albaraka')
+      && !any('credit shortfall', 'shortfall', 'gap cover', 'top up', 'top-up')) {
+    out.push({ sev: 'gap', tag: 'Gap', title: 'Financed assets — no credit shortfall found',
+      detail: 'Finance references appear but no credit shortfall / GAP cover was detected. On a written-off financed asset the insurer pays market value while the bank is owed the settlement balance — the client pays the difference in cash. Price shortfall on every financed unit.' });
+  }
+  if (fleet && !any('goods in transit', 'goods-in-transit', ' git ', 'git cover')) {
+    out.push({ sev: 'gap', tag: 'Gap', title: 'No Goods in Transit cover',
+      detail: 'This is a transport risk and no Goods-in-Transit cover was detected. Cargo in the client’s care, custody & control may be uninsured — confirm whether their trading conditions cap that liability, and whether those conditions are in their customer contracts.' });
+  }
+  if (any('namibia', 'mozambique', 'botswana', 'zimbabwe', 'lesotho', 'eswatini', 'swaziland', 'malawi', 'cross-border', 'cross border', 'sadc')) {
+    out.push({ sev: 'check', tag: 'Check', title: 'Cross-border / territorial terms present',
+      detail: 'Territorial extensions appear on this policy. Confirm the routes actually driven are covered <b>at vehicle level</b>, not just in the policy header — a mismatch is a live uninsured exposure on every cross-border trip.' });
+  }
+  return out;
+}
+
+function crRmPanel(findings, audit) {
   const item = (sev, label, txt) => el('div', { class: 'cr-find ' + sev },
     el('span', { class: 'cr-fk' }, label), el('div', { html: txt }));
   const rows = [];
   findings.gaps.forEach(g => rows.push(item('gap', 'Gap',
     '<b>' + crEsc(g.who) + '</b> did not quote <b>' + crEsc(g.sec) + '</b>' + (g.building ? ' (' + crEsc(g.building) + ')' : '')
     + ' — the current policy covers it. Confirm it is intentional or price it before presenting.')));
-  findings.reductions.forEach(r => rows.push(item('reduce', 'Cover \u2193',
+  findings.reductions.forEach(r => rows.push(item('reduce', 'Cover ↓',
     '<b>' + crEsc(r.who) + '</b> drops <b>' + crEsc(r.sec) + '</b> from ' + fmtLimit(r.from) + ' to ' + fmtLimit(r.to)
     + ' — a reduction in cover. Must be disclosed to the client in writing.')));
+  (findings.adequacy || []).forEach(a => rows.push(item('reduce', 'Limit thin',
+    '<b>' + crEsc(a.sec) + '</b>' + (a.building ? ' (' + crEsc(a.building) + ')' : '') + ' tops out at ' + fmtLimit(a.best)
+    + ' across every option — thin for ' + (a.fleet ? 'a transport risk (heavy haulage commonly carries R10m+)' : 'a commercial risk')
+    + '. A single serious claim can exceed it; put a higher limit on the table.')));
   findings.checks.forEach(c => rows.push(item('check', 'Wording',
     'Excess on <b>' + crEsc(c.sec) + '</b>' + (c.building ? ' (' + crEsc(c.building) + ')' : '')
     + ' is percentage-based on at least one side — compare the policy wording, not just the rand figure.')));
   if (!rows.length) rows.push(item('ok', 'Clear',
-    'No cover gaps, reductions or wording ambiguities were found across the compared options. This is a clean upgrade — proceed on price and the cover improvements above.'));
+    'No cover gaps, reductions or limit concerns were found across the compared options. This is a clean upgrade — proceed on price and the cover improvements above.'));
+  const auditRows = (audit || []).map(a => item(a.sev, a.tag, '<b>' + crEsc(a.title) + '.</b> ' + a.detail));
   return el('div', { class: 'cr-rm' },
     el('div', { class: 'cr-rm-h' },
-      el('span', { class: 'cr-rm-k' }, 'RM view \u00b7 internal \u2014 not on the client copy'),
+      el('span', { class: 'cr-rm-k' }, 'RM view · internal — not on the client copy'),
       el('h2', {}, 'Findings & actions before you present'),
       el('p', {}, 'The move is justified wherever cover holds or improves. Only a genuine cover gap is a reason to stay.')),
+    auditRows.length ? el('div', {},
+      el('div', { class: 'cr-rm-sub' }, 'Schedule audit · read the current policy, not just the price'),
+      el('div', { class: 'cr-rm-list' }, ...auditRows)) : null,
+    el('div', { class: 'cr-rm-sub' }, 'Cover comparison · the proposals against today'),
     el('div', { class: 'cr-rm-list' }, ...rows));
 }
 
@@ -2413,7 +2484,7 @@ function screenReport() {
           + ' — line by line, with a clear verdict on every section.'),
         chips.length ? el('div', { class: 'cr-chips' }, ...chips) : null),
       el('div', { class: 'cr-b' },
-        rmView ? crRmPanel(findings) : null,
+        rmView ? crRmPanel(findings, crScheduleAudit()) : null,
         crVerdictCards(op),
         op.options.length ? crSavingsChart(op) : null,
         up ? crAlert(up) : null,
@@ -2517,6 +2588,14 @@ function render() {
   else app.append(screenReport());
 }
 render();
+
+/* Guard against losing an in-progress comparison to an accidental tab close.
+   We deliberately do NOT persist client data to disk (privacy) — sessionStorage
+   already survives a refresh; this just warns before the tab is closed. */
+window.addEventListener('beforeunload', (e) => {
+  const busy = state.rmChosen && (((state.files?.schedule?.length || 0) + (state.files?.quote?.length || 0)) > 0 || (state.buildings?.length || 0) > 0);
+  if (busy) { e.preventDefault(); e.returnValue = ''; }
+});
 
 /* Installable PWA */
 if ('serviceWorker' in navigator) {
