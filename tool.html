@@ -1009,9 +1009,16 @@ const SECTION_ALIASES = [
   { canon: 'THEFT', re: /\btheft\b/i },
   { canon: 'GROUP PERSONAL ACCIDENT', re: /group personal accident|personal accident/i },
   { canon: 'TRUSTEES LIABILITY', re: /trustees?/i },
-  { canon: 'BROKER & ASSIST FEES', re: /broker|assist|policy fee|admin fee|sundry/i },
+  { canon: 'BROKER & ASSIST FEES', re: /broker|assist|policy fee|admin fee|sundry|risk services?/i },
   { canon: 'ADDITIONAL SERVICES', re: /additional services?/i },
   { canon: 'SASRIA', re: /sasria/i },
+  // Fallback rows from the fleet readers — kept LAST so every specific section
+  // above wins first. The current side seeds "Current premium (as billed)" and
+  // the proposed side "Total premium"; without a shared canonical key they land
+  // on two separate half-empty rows and the comparison never lines up.
+  { canon: 'VAT', re: /\bvat\b/i },
+  { canon: 'COVER PREMIUM', re: /premium — cover|cover premium/i },
+  { canon: 'TOTAL PREMIUM', re: /total premium|premium \(as billed\)|total monthly|premium payable/i },
 ];
 function canonSection(name) {
   const raw = String(name || '').trim();
@@ -1152,7 +1159,12 @@ function fleetTotalPremium(text) {
   const lab = /total\s*premium|premium\s*payable|total\s*monthly|grand\s*total|policy\s*premium|total\s*payable/gi;
   const cands = []; let m;
   while ((m = lab.exec(text || ''))) {
-    const seg = text.slice(m.index + m[0].length, m.index + m[0].length + 40);
+    // Window after the label must be generous ("payable monthly (incl. VAT):"
+    // alone is 30+ chars) and must never cut an amount mid-digits — extend to
+    // the end of any number run at the boundary so cents are never lost.
+    let end = m.index + m[0].length + 60;
+    while (end < text.length && /[\d ,.]/.test(text[end])) end++;
+    const seg = text.slice(m.index + m[0].length, end);
     const nums = [...seg.matchAll(/(\d[\d \.,]*\d)/g)].map(x => parseMoney2(x[1])).filter(v => v && v > 50);
     if (nums.length) cands.push(nums[0]); // first plausible amount after the label
   }
@@ -1216,9 +1228,15 @@ const FLEET_CATALOGUE=[
  ['VAPS', /\bvaps\b/i],
  ['Broker fee', /professional\s*\/?\s*broker\s+fee|broker\s+fee/i],
  ['SASRIA', /\bsasria\b/i],
+ ['VAT', /\bvat\b(?!\s*(?:no|reg|number))/i],
  ['Motor (vehicles)', /\bmotor\b/i],
 ];
-const _NEXT_LABEL=new RegExp('('+FLEET_CATALOGUE.map(e=>e[1].source).join('|')+'|\\btotal\\b|gross\\s+costs|annual\\s+savings)','i');
+// Consumed labels are overwritten with this marker (not spaces): it can never
+// re-match a broader label, but it still BOUNDS later rows' read windows —
+// with plain spaces a processed neighbour went invisible and the next row's
+// window bled into the row after it, reading someone else's amount.
+const _CONSUMED='\u0001';
+const _NEXT_LABEL=new RegExp('('+FLEET_CATALOGUE.map(e=>e[1].source).join('|')+'|\\btotal\\b|gross\\s+costs|annual\\s+savings|'+_CONSUMED+')','i');
 function parseCoverCatalogue(text){
   if(!text) return [];
   // bound the search to the summary region when an anchor exists — wording pages
@@ -1234,17 +1252,17 @@ function parseCoverCatalogue(text){
       let win=hay.slice(m.index+m[0].length, m.index+m[0].length+110);
       const nx=_NEXT_LABEL.exec(win);
       if(nx && nx.index>0) win=win.slice(0,nx.index);
-      if(/not\s+taken|not\s+included|not\s+selected/i.test(win)){ hay=hay.slice(0,m.index)+' '.repeat(m[0].length)+hay.slice(m.index+m[0].length); break; }
+      if(/not\s+taken|not\s+included|not\s+selected/i.test(win)){ hay=hay.slice(0,m.index)+_CONSUMED.repeat(m[0].length)+hay.slice(m.index+m[0].length); break; }
       const amts=[...win.matchAll(/(?:R\s*)?(\d{1,3}(?:[ ,]\d{3})*\.\d{2})/g)].map(x=>parseMoney2(x[1]));
       // one amount = the premium · three or more = value/annual/monthly (take the third)
       const v=!amts.length?null:(amts.length>=3?amts[2]:amts[amts.length-1]);
       if(v!=null && v>0 && v<2000000){
         out.push({s:canon, v:+v.toFixed(2)});
-        hay=hay.slice(0,m.index)+' '.repeat(m[0].length)+hay.slice(m.index+m[0].length);  // blank so broader labels can't re-hit
+        hay=hay.slice(0,m.index)+_CONSUMED.repeat(m[0].length)+hay.slice(m.index+m[0].length);  // consume so broader labels can't re-hit
         break;
       }
-      // label present but no premium here — blank it and keep scanning
-      hay=hay.slice(0,m.index)+' '.repeat(m[0].length)+hay.slice(m.index+m[0].length);
+      // label present but no premium here — consume it and keep scanning
+      hay=hay.slice(0,m.index)+_CONSUMED.repeat(m[0].length)+hay.slice(m.index+m[0].length);
       if(g.lastIndex>m.index) g.lastIndex=m.index+m[0].length;
       if(out.length>60) break;
     }
@@ -1275,6 +1293,13 @@ function parseFleetSections(text) {
     // If the layout beat the reader, keep the total (always reliable) and let
     // the RM itemise in Review — never show line figures we can't stand behind.
     if (!stated || Math.abs(sum - stated) <= Math.max(2, stated * 0.005)) return { secs, grand: stated || sum };
+    // Santam-style layouts itemise sections BEFORE VAT while the stated total
+    // is the all-in incl. VAT. If sum × 1.15 lands on the stated total, the
+    // read is good — itemise and add the VAT line so it reconciles to the cent.
+    if (Math.abs(sum * 1.15 - stated) <= Math.max(2, stated * 0.005)) {
+      secs.push({ s: 'VAT (15%)', prop: +(stated - sum).toFixed(2) });
+      return { secs, grand: stated };
+    }
     return { secs: [{ s: 'Total premium', prop: stated }], grand: stated, unreconciled: true };
   }
   const first = re => { const m = re.exec(text); return m ? _fnum(m[1]) : null; };
@@ -1318,6 +1343,12 @@ function parseFleetCurrent(text) {
     const sum = +cat.reduce((a, c) => a + c.v, 0).toFixed(2);
     const stated = fleetTotalPremium(t);
     if (!stated || Math.abs(sum - stated) <= Math.max(2, stated * 0.005)) return { total: stated || sum, parts };
+    // Same VAT bridge as the proposed side: sections stated before VAT, total
+    // stated all-in — itemise with an explicit VAT line when × 1.15 reconciles.
+    if (Math.abs(sum * 1.15 - stated) <= Math.max(2, stated * 0.005)) {
+      parts.push({ s: 'VAT (15%)', cur: +(stated - sum).toFixed(2) });
+      return { total: stated, parts };
+    }
     return { total: stated, parts: [{ s: 'Current premium (as billed)', cur: stated }], unreconciled: true };
   }
   const base = fleetTotalPremium(t);
@@ -1416,7 +1447,14 @@ function genericSeed() {
     curParts.forEach(p => { const l = touch(p.s); l.cur = p.cur; });
     const secList = order.length ? order.map(k => ({ s: k, prop: +combined.get(k).toFixed(2) })) : [{ s: 'Total premium', prop: null }];
     secList.forEach(sx => { const l = touch(sx.s); l.prop = sx.prop; });
-    q.lines.forEach(l => { if (l.cur != null && l.prop == null && !l.propIncl) { l.propNq = true; l.propStr = 'Not quoted'; } });
+    // "Not quoted" is a per-section verdict — it only means something when the
+    // proposal itemised. A total-only proposal covers sections inside its single
+    // figure, and a total-only current row is not a section the proposal missed.
+    const propTotalOnly = secList.length === 1 && canonSection(secList[0].s) === 'TOTAL PREMIUM';
+    q.lines.forEach(l => {
+      if (l.cur != null && l.prop == null && !l.propIncl
+          && !propTotalOnly && canonSection(l.s) !== 'TOTAL PREMIUM') { l.propNq = true; l.propStr = 'Not quoted'; }
+    });
     const notes = [];
     if (splitCur) notes.push('Current premium shown all-in (cover + Risk services/fees + SASRIA) so it compares like-for-like with the proposed premium. Confirm each part against the schedule.');
     if (converted) notes.push('Premiums stated per year on a quote are shown here per month (÷12). Confirm the basis of every figure before presenting.');
@@ -2147,7 +2185,10 @@ function reportSummaryMulti() {
           o.key === op.recId); })),
     el('div', { class: 'rnote' }, el('h3', {}, 'Options summary'),
       el('p', {}, op.options.length + ' Cartrack options are presented side by side against the client’s current cover'
-        + (recOpt ? ', with ' + recOpt.insurer + ' the lowest total premium at ' + fmtR(recOpt.prop) + ' per month' : '')
+        // Say WHY the pick wins — the recommended option is the cheapest only
+        // when no cover gap forced a dearer-but-better pick.
+        + (recOpt ? ', with ' + recOpt.insurer + ' recommended at ' + fmtR(recOpt.prop) + ' per month'
+          + (op.options.every(o => o.prop >= recOpt.prop - 0.005) ? ' — the lowest total premium' : ' — not the cheapest, but it holds cover the cheaper option leaves out') : '')
         + '. Each cover section is compared below; the lowest premium for each section is ticked, and any section an option did not quote is flagged.')));
 }
 // Building × option grid (multi-option, multiple buildings).
@@ -2192,6 +2233,9 @@ function crKind(label) {
   if (/excess/.test(s)) return 'excess';
   if (/liabilit|third[\s-]?party|passenger|broadform|public liab|indemnit/.test(s)) return 'liability';
   if (/sum insured|goods in transit|\bgit\b|limit of|\bcover\b/.test(s)) return 'cover';
+  // Fees and VAT are charges, not cover sections — a proposal that doesn't
+  // charge them must never read as a cover GAP on the client report.
+  if (/broker|admin(istration)?\s*fee|policy fee|risk services|\bassist\b|\bvat\b|\bfees?\b/.test(s)) return 'fees';
   return 'premium';
 }
 // Read an excess descriptor into a comparable value. "Nil"/"None"/"R0" -> 0;
@@ -2271,6 +2315,14 @@ function crLineVerdict(kind, curCell, cells, opts) {
     return cell([pill('tie', 'Compare wording')], 'Excess terms differ in basis (percentage vs fixed) — compare the policy wording before deciding.');
   }
 
+  // fees / VAT — a charge only the current policy carries is a saving, not a gap
+  if (kind === 'fees') {
+    const fr = comp.filter(c => c.prem != null);
+    if (fr.length === 1 && fr[0].key === '__cur')
+      return cell([pill('tie', 'Fee')], 'A fee or levy on the current policy, not a cover section — the proposal does not charge it separately. No cover impact.');
+    // both sides charge it → fall through to the premium comparison below
+  }
+
   // premium line — lowest monthly premium wins
   const pr = comp.filter(c => c.prem != null);
   if (!pr.length) return cell([pill('gap', 'Gap')], 'Not quoted by the compared options — flag to the client.');
@@ -2318,15 +2370,19 @@ function crVerdictCards(op) {
     el('div', { class: 'prem num' }, crMoney(op.cur, 0)),
     el('div', { class: 'per' }, 'per month · in force'),
     el('div', { class: 'delta' }, el('span', { class: 'base' }, 'The benchmark')))];
+  // "lowest total" must state a fact about price — the recommended option can
+  // be a dearer one that holds cover the cheapest drops (dearer-but-better).
+  const lowest = op.options.length ? Math.min(...op.options.map(x => x.prop)) : null;
   op.options.forEach((o, i) => {
     const isRec = o.key === op.recId && op.options.length > 1;
+    const isLowest = lowest != null && op.options.length > 1 && Math.abs(o.prop - lowest) < 0.005;
     const save = op.cur - o.prop;
     cards.push(el('div', { class: 'cr-qc' + (isRec ? ' win' : '') },
       isRec ? el('span', { class: 'cr-badge' }, 'Recommended') : null,
       el('div', { class: 'role' }, 'Proposal ' + (i + 1)),
       el('h3', {}, o.insurer || 'Cartrack'),
       el('div', { class: 'prem num' }, crMoney(o.prop, 0)),
-      el('div', { class: 'per' }, 'per month' + (isRec ? ' · lowest total' : '')),
+      el('div', { class: 'per' }, 'per month' + (isLowest ? ' · lowest total' : isRec ? ' · fullest cover' : '')),
       el('div', { class: 'delta' }, op.cur ? (save > 0.5
         ? el('span', { class: 'save' }, '−' + crMoney(save, 0) + '/mo · ≈ ' + crMoney(save * 12, 0) + '/yr')
         : el('span', { class: 'base' }, save < -0.5 ? '+' + crMoney(-save, 0) + '/mo vs current' : 'like-for-like')) : el('span', { class: 'base' }, ' '))));
