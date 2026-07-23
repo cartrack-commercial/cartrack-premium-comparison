@@ -704,16 +704,18 @@ function lineFlags(l) {
   return flags;
 }
 function quoteTotals(q) {
-  let cur = 0, prop = 0, comparable = 0, gaps = 0, added = 0;
+  let cur = 0, prop = 0, comparable = 0, gaps = 0, added = 0, curKnown = false;
   for (const l of q.lines) {
     const { st } = lineStatus(l);
-    if (l.cur != null) cur += l.cur;
+    if (l.cur != null) { cur += l.cur; curKnown = true; }
     if (l.prop != null) prop += l.prop;
     if (st === 'gap') gaps++;            // current covered, Cartrack didn't quote
     else if (st === 'added') added++;    // Cartrack added cover the client didn't have
     else comparable++;
   }
-  return { cur: +cur.toFixed(2), prop: +prop.toFixed(2), delta: +(prop-cur).toFixed(2), comparable, gaps, added };
+  // curKnown: an unread current premium must show as unknown, never as R 0.00 —
+  // "R 0.00 current vs R 16,967 proposed" reads as Cartrack costing more.
+  return { cur: +cur.toFixed(2), prop: +prop.toFixed(2), delta: +(prop-cur).toFixed(2), comparable, gaps, added, curKnown };
 }
 const quotesOf = b => state.quotes.filter(q => q.buildingId === b.id);
 function selQuote(b) {
@@ -721,12 +723,12 @@ function selQuote(b) {
   return qs.find(q => q.id === b.selQ) || qs[0] || null;
 }
 function portfolio() {
-  let cur = 0, prop = 0, n = 0;
+  let cur = 0, prop = 0, n = 0, curKnown = false;
   for (const b of state.buildings) {
     const q = selQuote(b); if (!q || !q.lines.length) continue;
-    const t = quoteTotals(q); cur += t.cur; prop += t.prop; n++;
+    const t = quoteTotals(q); cur += t.cur; prop += t.prop; n++; if (t.curKnown) curKnown = true;
   }
-  return { cur: +cur.toFixed(2), prop: +prop.toFixed(2), delta: +(prop-cur).toFixed(2), n };
+  return { cur: +cur.toFixed(2), prop: +prop.toFixed(2), delta: +(prop-cur).toFixed(2), n, curKnown };
 }
 
 /* ---------- won-quote → RM book handoff ---------- */
@@ -1237,12 +1239,8 @@ const FLEET_CATALOGUE=[
 // window bled into the row after it, reading someone else's amount.
 const _CONSUMED='\u0001';
 const _NEXT_LABEL=new RegExp('('+FLEET_CATALOGUE.map(e=>e[1].source).join('|')+'|\\btotal\\b|gross\\s+costs|annual\\s+savings|'+_CONSUMED+')','i');
-function parseCoverCatalogue(text){
-  if(!text) return [];
-  // bound the search to the summary region when an anchor exists — wording pages
-  // repeat these labels with limits (not premiums) and would poison the read.
-  const am=/cover\s+summ?[ae]ry|premium\s+breakdown|summary:\s*premium\s+details|monthly\s+premium/i.exec(text);
-  let hay=am?text.slice(am.index, am.index+5000):text;
+// Scan ONE candidate region for catalogue rows.
+function _catalogueScan(hay){
   const out=[];
   for(const [canon,re] of FLEET_CATALOGUE){
     const g=new RegExp(re.source,'gi'); let m;
@@ -1269,6 +1267,20 @@ function parseCoverCatalogue(text){
   }
   return out;
 }
+// A long document repeats summary-looking anchors on its wording pages — where
+// labels sit next to LIMITS, not premiums, and poison the read (a current
+// policy pack once seeded "Extensions R10,000" as a premium). So: one candidate
+// rowset per anchor region, and the CALLERS accept only a rowset they can
+// verify against the stated total. No anchor at all → the whole text is the
+// single candidate (short quote summaries often carry no heading).
+function parseCoverCatalogue(text){
+  if(!text) return [];
+  const are=/cover\s+summ?[ae]ry|premium\s+breakdown|summary:\s*premium\s+details|monthly\s+premium/gi;
+  const regions=[]; let m;
+  while((m=are.exec(text)) && regions.length<8) regions.push(text.slice(m.index, m.index+5000));
+  if(!regions.length) regions.push(text);
+  return regions.map(_catalogueScan).filter(r=>r.length);
+}
 // Name the insurer behind a fleet quote file — fleet quotes are often UMA paper
 // the general INSURERS list doesn't know (Alpha, Ownsurance, VAPS…).
 function fleetInsurerName(f){
@@ -1283,25 +1295,34 @@ function fleetInsurerName(f){
 // Parse a proposed fleet quote into comparison sections. Detailed per-fleet
 // breakdown for the FleetBüddy layout; a generic total-premium line otherwise.
 function parseFleetSections(text) {
-  // Catalogue read first: a full section breakdown beats any total-only fallback.
-  const cat = parseCoverCatalogue(text);
-  if (cat.length >= 3) {
-    const secs = cat.map(c => ({ s: c.s, prop: c.v }));
+  // Catalogue read first: a VERIFIED section breakdown beats any total-only
+  // fallback. Try each summary-looking region; accept the first whose lines
+  // reconcile with the stated total — directly, or across the ×1.15 VAT bridge
+  // (Santam-style layouts itemise before VAT while the total is all-in).
+  // Never show line figures we can't stand behind: no stated total to check
+  // against → unverified rows are trusted only on a document short enough to
+  // BE the quote itself, never on a policy-wording tome.
+  const stated = fleetTotalPremium(text);
+  const tol = stated ? Math.max(2, stated * 0.005) : 0;
+  let firstCat = null;
+  for (const cat of parseCoverCatalogue(text)) {
+    if (cat.length < 3) continue;
+    if (!firstCat) firstCat = cat;
     const sum = +cat.reduce((a, c) => a + c.v, 0).toFixed(2);
-    const stated = fleetTotalPremium(text);
-    // Trust the itemised breakdown ONLY if it reconciles to the stated total.
-    // If the layout beat the reader, keep the total (always reliable) and let
-    // the RM itemise in Review — never show line figures we can't stand behind.
-    if (!stated || Math.abs(sum - stated) <= Math.max(2, stated * 0.005)) return { secs, grand: stated || sum };
-    // Santam-style layouts itemise sections BEFORE VAT while the stated total
-    // is the all-in incl. VAT. If sum × 1.15 lands on the stated total, the
-    // read is good — itemise and add the VAT line so it reconciles to the cent.
-    if (Math.abs(sum * 1.15 - stated) <= Math.max(2, stated * 0.005)) {
+    if (stated && Math.abs(sum - stated) <= tol)
+      return { secs: cat.map(c => ({ s: c.s, prop: c.v })), grand: stated };
+    if (stated && Math.abs(sum * 1.15 - stated) <= tol) {
+      const secs = cat.map(c => ({ s: c.s, prop: c.v }));
       secs.push({ s: 'VAT (15%)', prop: +(stated - sum).toFixed(2) });
       return { secs, grand: stated };
     }
-    return { secs: [{ s: 'Total premium', prop: stated }], grand: stated, unreconciled: true };
   }
+  if (!stated && firstCat && text.length < 15000) {
+    const sum = +firstCat.reduce((a, c) => a + c.v, 0).toFixed(2);
+    return { secs: firstCat.map(c => ({ s: c.s, prop: c.v })), grand: sum };
+  }
+  if (stated && firstCat)
+    return { secs: [{ s: 'Total premium', prop: stated }], grand: stated, unreconciled: true };
   const first = re => { const m = re.exec(text); return m ? _fnum(m[1]) : null; };
   const fleets = [];
   const re = /Item\s+(\d+)\s*[-–]\s*([A-Za-z][A-Za-z0-9 ]*?)\s+(\d+)\s+Sum Insured\s*R([\d ,]+)[\s\S]{0,180}?Total Premium\s*R([\d ,]+\.\d{2})/g;
@@ -1337,21 +1358,32 @@ function parseFleetCurrent(text) {
   const t = text || '';
   // Catalogue read first — emits the SAME canonical section names as the proposed
   // side, so current and proposed line up row-for-row like a hand-built comparison.
-  const cat = parseCoverCatalogue(t);
-  if (cat.length >= 3) {
-    const parts = cat.map(c => ({ s: c.s, cur: c.v }));
+  // Same verification rules as parseFleetSections: accept the first region that
+  // reconciles with the stated total (directly or over the VAT bridge); with no
+  // stated total, unverified rows are trusted only on a short quote-sized
+  // document — a 100k-char policy pack must NEVER fabricate a current premium.
+  const stated = fleetTotalPremium(t);
+  const tol = stated ? Math.max(2, stated * 0.005) : 0;
+  let firstCat = null;
+  for (const cat of parseCoverCatalogue(t)) {
+    if (cat.length < 3) continue;
+    if (!firstCat) firstCat = cat;
     const sum = +cat.reduce((a, c) => a + c.v, 0).toFixed(2);
-    const stated = fleetTotalPremium(t);
-    if (!stated || Math.abs(sum - stated) <= Math.max(2, stated * 0.005)) return { total: stated || sum, parts };
-    // Same VAT bridge as the proposed side: sections stated before VAT, total
-    // stated all-in — itemise with an explicit VAT line when × 1.15 reconciles.
-    if (Math.abs(sum * 1.15 - stated) <= Math.max(2, stated * 0.005)) {
+    if (stated && Math.abs(sum - stated) <= tol)
+      return { total: stated, parts: cat.map(c => ({ s: c.s, cur: c.v })) };
+    if (stated && Math.abs(sum * 1.15 - stated) <= tol) {
+      const parts = cat.map(c => ({ s: c.s, cur: c.v }));
       parts.push({ s: 'VAT (15%)', cur: +(stated - sum).toFixed(2) });
       return { total: stated, parts };
     }
-    return { total: stated, parts: [{ s: 'Current premium (as billed)', cur: stated }], unreconciled: true };
   }
-  const base = fleetTotalPremium(t);
+  if (!stated && firstCat && t.length < 15000) {
+    const sum = +firstCat.reduce((a, c) => a + c.v, 0).toFixed(2);
+    return { total: sum, parts: firstCat.map(c => ({ s: c.s, cur: c.v })) };
+  }
+  if (stated && firstCat)
+    return { total: stated, parts: [{ s: 'Current premium (as billed)', cur: stated }], unreconciled: true };
+  const base = stated;
   if (base == null) return { total: null, parts: [] };
   // Separately-stated Risk Services / administration fee (a fraction of the base).
   const fm = /(?:risk\s*services?(?:\s*fees?)?|administration\s*fee|admin(?:istration)?\s*charge|policy\s*fee)[^\d%]{0,20}(?:R\s*)?(\d[\d .,]*\d)/i.exec(t);
@@ -1893,6 +1925,7 @@ function buildingCard(b, idx) {
   const insurerInput = (q) => { const i = el('input', { class: 'rvin', style: 'font-weight:700', value: q.insurer || '', placeholder: 'Insurer' });
     i.oninput = () => { q.insurer = i.value; save(); }; i.onchange = () => render(); return i; };
   const curTotal = order.reduce((s, sec) => { const l = qs.length ? qs[0].lines.find(x => secKey(x.s) === sec.key) : null; return s + (l && l.cur != null ? l.cur : 0); }, 0);
+  const curKnown = qs.length && qs[0].lines.some(l => l.cur != null);
   const cheapest = qs.length > 1 ? Math.min(...qs.map(q => quoteTotals(q).prop)) : null;
   return el('div', { class: 'card' },
     el('div', { class: 'card-h' },
@@ -1922,11 +1955,11 @@ function buildingCard(b, idx) {
                 el('td', {}, el('button', { class: 'x', title: 'Remove line', onClick: () => { qs.forEach(qq => { qq.lines = qq.lines.filter(x => secKey(x.s) !== sec.key); }); save(); render(); } }, '×'))); }),
             el('tr', { class: 'tot' },
               el('td', {}, 'Total / month'),
-              el('td', { class: 'r' }, fmtR(curTotal)),
+              el('td', { class: 'r' }, curKnown ? fmtR(curTotal) : '—'),
               ...qs.map(qq => { const t = quoteTotals(qq); const d = t.prop - curTotal;
                 return el('td', { class: 'r' + (cheapest != null && t.prop === cheapest ? ' best' : '') }, fmtR(t.prop),
                   el('span', { class: 'savechip ' + (d < 0 ? 'rneg' : d > 0 ? 'rpos' : '') },
-                    curTotal ? (d < 0 ? '− ' + fmtR(Math.abs(d) * 12) + '/yr' : d > 0 ? '+ ' + fmtR(d * 12) + '/yr' : 'like-for-like') : '')); }),
+                    (curKnown && curTotal) ? (d < 0 ? '− ' + fmtR(Math.abs(d) * 12) + '/yr' : d > 0 ? '+ ' + fmtR(d * 12) + '/yr' : 'like-for-like') : '')); }),
               el('td', {})))),
       ),
       el('div', { style: 'display:flex;gap:8px;margin-top:12px;flex-wrap:wrap' },
@@ -1951,14 +1984,18 @@ function screenReview() {
     el('p', { class: 'lede' }, 'Buildings and quotes below were pre-created from your files — confirm every figure against the source documents, correct anything that is off, and fill in what could not be read. Totals, variances and status are computed as you type.'),
     el('div', { class: 'rollup' },
       el('div', { class: 'stat' }, el('div', { class: 'lab' }, 'Current monthly'),
-        el('div', { class: 'val' }, fmtR(p.cur)), el('div', { class: 'sub' }, p.n + ' building' + (p.n===1?'':'s') + ' with quotes')),
+        el('div', { class: 'val' }, p.curKnown ? fmtR(p.cur) : '—'),
+        el('div', { class: 'sub' }, p.curKnown ? p.n + ' building' + (p.n===1?'':'s') + ' with quotes' : 'could not be read — enter it below')),
       el('div', { class: 'stat' }, el('div', { class: 'lab' }, 'Proposed monthly'),
         el('div', { class: 'val' }, fmtR(p.prop)), el('div', { class: 'sub' }, 'selected quote per building')),
-      el('div', { class: 'stat' }, el('div', { class: 'lab' }, 'Variance / month'),
+      p.curKnown ? el('div', { class: 'stat' }, el('div', { class: 'lab' }, 'Variance / month'),
         el('div', { class: 'val', style: p.delta < 0 ? 'color:var(--green-700)' : p.delta > 0 ? 'color:var(--red-600)' : '' },
           fmtR(p.delta, true)),
         el('div', { class: 'sub' }, p.delta < 0 ? 'saves ' + fmtR(Math.abs(p.delta)*12) + ' / year' :
-          p.delta > 0 ? 'adds ' + fmtR(p.delta*12) + ' / year' : '—')),
+          p.delta > 0 ? 'adds ' + fmtR(p.delta*12) + ' / year' : '—'))
+      : el('div', { class: 'stat' }, el('div', { class: 'lab' }, 'Variance / month'),
+        el('div', { class: 'val' }, '—'),
+        el('div', { class: 'sub' }, 'needs the current premium first')),
     ),
     okFiles.length ? el('div', { style: 'margin-top:20px' },
       el('div', { class: 'eyebrow', style: 'margin-bottom:8px' }, 'Source documents (read on this device)'),
@@ -2034,6 +2071,7 @@ function reportBuildingMulti(b, opts, recId) {
   });
   const totals = opts.map(q => quoteTotals(q));
   const curTotal = rows.reduce((s, r) => s + (r.curL && r.curL.cur != null ? r.curL.cur : 0), 0);
+  const curKnown = rows.some(r => r.curL && r.curL.cur != null);
   const bestTotal = Math.min(...totals.map(t => t.prop));
   const propCell = (l, isBest, isGap) => {
     let txt = '—';
@@ -2065,11 +2103,11 @@ function reportBuildingMulti(b, opts, recId) {
             }))),
           el('tr', { class: 'tot' },
             el('td', {}, 'Total / month'),
-            el('td', { class: 'r' }, fmtR(curTotal)),
+            el('td', { class: 'r' }, curKnown ? fmtR(curTotal) : '—'),
             ...totals.map((t, i) => el('td', { class: 'r' + (t.prop === bestTotal ? ' best' : '') },
               fmtR(t.prop),
               el('span', { class: 'savechip ' + (t.prop - curTotal < 0 ? 'rneg' : t.prop - curTotal > 0 ? 'rpos' : '') },
-                curTotal ? (t.prop - curTotal < 0 ? '− ' + fmtR(Math.abs(t.prop - curTotal) * 12).replace('R ', 'R ') + '/yr' : t.prop - curTotal > 0 ? '+ ' + fmtR((t.prop - curTotal) * 12).replace('R ', 'R ') + '/yr' : 'like-for-like') : ''))))))),
+                (curKnown && curTotal) ? (t.prop - curTotal < 0 ? '− ' + fmtR(Math.abs(t.prop - curTotal) * 12).replace('R ', 'R ') + '/yr' : t.prop - curTotal > 0 ? '+ ' + fmtR((t.prop - curTotal) * 12).replace('R ', 'R ') + '/yr' : 'like-for-like') : ''))))))),
     el('div', { style: 'font-size:10px;color:var(--ink-500);margin-top:4px' },
       '✓ = lowest premium for that section. Red = option did not quote a section the others cover.'),
     (b.terms && b.terms.some(t => t.item || t.current || (t.props && Object.values(t.props).some(v => v)))) ? termsTable(b, opts, false) : null,
@@ -2430,6 +2468,7 @@ function crBuildingSection(b, opts, recId, idx) {
   });
   const totals = opts.map(q => quoteTotals(q));
   const curTotal = rows.reduce((s, r) => s + (r.curCell && r.curCell.cur != null ? r.curCell.cur : 0), 0);
+  const curKnown = rows.some(r => r.curCell && r.curCell.cur != null);
   const bestTotal = Math.min(...totals.map(t => t.prop));
   const head = el('tr', {},
     el('th', {}, 'Cover line'),
@@ -2450,14 +2489,14 @@ function crBuildingSection(b, opts, recId, idx) {
   });
   const totRow = el('tr', { class: 'tot' },
     el('td', { class: 'item' }, 'Total / month'),
-    el('td', { class: 'val' }, el('span', { class: 'n' }, crMoney(curTotal))),
+    el('td', { class: 'val' }, el('span', { class: 'n' }, curKnown ? crMoney(curTotal) : '—')),
     ...totals.map((t, i) => el('td', { class: 'val' + ((opts[i].optionId || opts[i].id) === recId ? ' oc' : '') },
       el('span', { class: 'n' }, crMoney(t.prop)))),
     el('td', { class: 'verdict' }, (() => {
       const best = opts[totals.findIndex(t => t.prop === bestTotal)];
       const name = best ? (best.insurer || 'Cartrack') : '';
       const save = curTotal - bestTotal;
-      return el('span', {}, el('span', { class: 'cr-pill' }, name), save > 0.5 ? 'Lowest total — ' + crMoney(save) + '/mo under the current policy.' : 'Lowest total premium.');
+      return el('span', {}, el('span', { class: 'cr-pill' }, name), (curKnown && save > 0.5) ? 'Lowest total — ' + crMoney(save) + '/mo under the current policy.' : 'Lowest total premium.');
     })()));
   const title = b.name && !/^premium comparison$/i.test(b.name) ? b.name : 'Cover comparison';
   const sub = [b.entity, b.si ? 'Sum insured ' + b.si : '', opts.length + ' proposal' + (opts.length > 1 ? 's' : '')].filter(Boolean).join(' · ');
