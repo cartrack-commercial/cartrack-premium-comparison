@@ -410,7 +410,9 @@
   .cr-wm .ref{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.05em;color:#8B93A0;text-align:right;line-height:1.7;}
   .cr-eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--orange-hi);margin-bottom:13px;}
   .cr-eyebrow::before{content:"";width:24px;height:2px;background:var(--orange);}
-  .cr-hero h1{font-weight:700;font-size:clamp(26px,4.4vw,40px);line-height:1.03;letter-spacing:-.02em;margin:0 0 11px;text-wrap:balance;}
+  /* color set EXPLICITLY: without it the h1 computes near-black despite the
+     hero's white color (rendering quirk) — invisible on the dark panel. */
+  .cr-hero h1{font-weight:700;font-size:clamp(26px,4.4vw,40px);line-height:1.03;letter-spacing:-.02em;margin:0 0 11px;text-wrap:balance;color:#fff;}
   .cr-hero .lede{font-size:14px;color:#C4CAD2;max-width:60ch;line-height:1.55;}
   .cr-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
   .cr-chip{font-family:'Space Mono',monospace;font-size:10.5px;color:#E6E9ED;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 12px;}
@@ -514,9 +516,25 @@
   @media print{
     .cr{border-radius:0;background:#fff;box-shadow:none;}
     .cr-hero{padding:22px 24px 24px;}
-    .cr-tw{overflow:visible;} .cr-sec,.cr-qc,.cr-chart,.cr-alert,.cr-reco,.cr-rm,.cr-find{break-inside:avoid;}
+    /* The decorative glow prints as an OPAQUE orange blob on phone print
+       engines (alpha radial-gradients rasterise badly) — flat dark hero. */
+    .cr-hero::before{display:none;}
+    /* the review-step print rules blanket-hide .lede — the REPORT hero's
+       lede is part of the client document and must stay. */
+    .cr-hero .lede{display:block !important;}
+    /* The comparison table must FIT the sheet, not scroll: drop the screen
+       min-widths and nowraps so columns shrink and verdict text wraps —
+       otherwise the verdict column prints clipped off the page edge. */
+    .cr-tw{overflow:visible;border-radius:0;}
+    .cr table{min-width:0;font-size:10px;}
+    .cr td.item,.cr td.verdict{min-width:0;}
+    .cr td.val{white-space:normal;}
+    .cr thead th{white-space:normal;position:static;}
+    /* Small units stay whole. SECTIONS may flow across pages — forcing a
+       taller-than-a-page section to avoid breaking is what produced the
+       half-empty pages with the table shoved onto the next sheet. */
+    .cr-qc,.cr-cards,.cr-chart,.cr-alert,.cr-reco,.cr-find{break-inside:avoid;}
     .cr tbody tr{break-inside:avoid;} .cr-sh,.cr-eyerow,.cr-rm-sub{break-after:avoid;}
-    .cr thead th{position:static;}
   }
 
   /* report view toggle (Client / RM) */

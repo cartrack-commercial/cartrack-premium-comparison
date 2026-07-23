@@ -1,7 +1,7 @@
 /* Service worker — enables home-screen install and offline viewing.
    Strategy: network-first, falling back to cache. The freshest tool.html is
    always served when online; the cached shell only kicks in offline. */
-const CACHE = 'ct-compare-shell-v29';
+const CACHE = 'ct-compare-shell-v30';
 const SHELL = [
   './tool.html',
   './manifest.webmanifest',
