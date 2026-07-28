@@ -728,7 +728,7 @@ const CLIENT_TYPES = [
 ];
 
 const STORE_KEY = 'ct-compare-v1';
-const APP_VERSION = 'v2026.07.23b';   // shown on the welcome screen + report fine print
+const APP_VERSION = 'v2026.07.28a';   // shown on the welcome screen + report fine print
 // Draft safety-net: phones evict background tabs mid-comparison. The draft
 // stays on this device only, is offered for resume on the next open, expires
 // after 7 days, and is cleared on Reset and on hand-off to the book.
@@ -1388,28 +1388,84 @@ function parseMoney2(s) {
   const n = parseFloat(str);
   return Number.isFinite(n) ? n : null;
 }
-// Generic "total premium" off any fleet/motor quote or schedule — takes the
-// figure next to a total-premium label, largest across the document.
-function fleetTotalPremium(text) {
-  const lab = /total\s*premium|premium\s*payable|total\s*monthly|grand\s*total|policy\s*premium|total\s*payable/gi;
-  const cands = []; let m;
-  while ((m = lab.exec(text || ''))) {
-    // Window after the label must be generous ("payable monthly (incl. VAT):"
-    // alone is 30+ chars) and must never cut an amount mid-digits — extend to
-    // the end of any number run at the boundary so cents are never lost.
-    let end = m.index + m[0].length + 60;
-    while (end < text.length && /[\d ,.]/.test(text[end])) end++;
-    const seg = text.slice(m.index + m[0].length, end);
-    const nums = [...seg.matchAll(/(\d[\d \.,]*\d)/g)].map(x => parseMoney2(x[1])).filter(v => v && v > 50);
-    if (nums.length) cands.push(nums[0]); // first plausible amount after the label
+// All-in premium off any fleet/motor quote or schedule.
+//
+// SA schedules stack several "total" rows: a premium subtotal (before
+// fees/SASRIA/VAT) and then the amount the client actually pays. Reading the
+// first or the largest label picks the wrong one — that is how a pre-SASRIA
+// total, or an annual column, reaches a client. Labels are therefore ranked,
+// and the highest tier present on the document always wins.
+//   tier 3 = the all-in figure   tier 2 = payment subtotal   tier 1 = premium only
+const PREM_TIERS = [
+  [3, /^[\s ]*(?:total\s+insurance\s+payment|total\s+amount\s+(?:due|payable)|total\s+monthly\s+payment|total\s+premium\s+including|grand\s+total|total\s+payable|amount\s+due|total\s+due)\b/i],
+  [3, /^[\s ]*total\s*[:.]?(?=[R\s –—-]*[\d(])/i],
+  [2, /^[\s ]*(?:insurance\s+payment|sub\s*total)\b/i],
+  [1, /^[\s ]*(?:total\s+(?:risk\s+)?premium|premium\s+payable|policy\s+premium|basic\s+premium)\b/i],
+];
+// A space counts as a thousands separator only when followed by exactly three
+// digits. Free-running whitespace merges adjacent columns into one bogus number
+// ("5,881.58   5,899.92" -> 5881.585899).
+const MONEY_TOKEN = /(?:R[\s ]*)?(\d{1,3}(?:[\s ]\d{3})+(?:[.,]\d{1,2})?|\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)/g;
+// Money carries at most two decimals — guards against policy numbers, rates
+// ("0.039228%") and references being read as premiums.
+function _tokenIsMoney(raw) {
+  const s = raw.replace(/[\s ]/g, '');
+  return /^\d{1,3}(?:[,.]\d{3})*(?:[,.]\d{1,2})?$/.test(s) || /^\d+(?:[,.]\d{1,2})?$/.test(s);
+}
+function _rowAmounts(seg) {
+  const clean = seg.replace(/\([^)]*\)/g, ' ');   // ignore "(VAT included R707.03)"
+  const out = [];
+  for (const m of clean.matchAll(MONEY_TOKEN)) {
+    if (!_tokenIsMoney(m[1])) continue;
+    const v = parseMoney2(m[1]);
+    if (v != null && v > 20 && v < 5e8) out.push(v);
   }
-  return cands.length ? Math.max(...cands) : null;
+  return out;
+}
+// A row may carry an annual and a monthly column; a ratio near 12 is the
+// giveaway and the monthly is the comparable figure. Otherwise the payable
+// amount is the last column (prorata/adjustment columns are printed first).
+function _pickFromRow(nums) {
+  if (!nums.length) return null;
+  if (nums.length >= 2) {
+    const hi = Math.max(...nums), lo = Math.min(...nums);
+    if (lo > 0 && hi / lo >= 10.5 && hi / lo <= 13.5) return { v: lo, annualPair: true };
+  }
+  return { v: nums[nums.length - 1], annualPair: false };
+}
+// Returns { value, tier, annualPair, label } or null.
+function allInPremium(text) {
+  const cands = [];
+  for (const raw of String(text || '').split(/\r?\n/)) {
+    if (!/\d/.test(raw)) continue;
+    for (const [tier, re] of PREM_TIERS) {
+      const m = re.exec(raw);
+      if (!m) continue;
+      const pick = _pickFromRow(_rowAmounts(raw.slice(m[0].length)));
+      if (pick) cands.push({ tier, value: pick.v, annualPair: pick.annualPair, label: m[0].trim() });
+      break;
+    }
+  }
+  if (!cands.length) return null;
+  const top = Math.max(...cands.map(c => c.tier));
+  // Within a tier take the largest: the label repeats per section (Western
+  // prints "TOTAL PREMIUM:" on every section) and the policy-wide figure is
+  // the biggest of them.
+  return cands.filter(c => c.tier === top).reduce((a, b) => (b.value > a.value ? b : a));
+}
+function fleetTotalPremium(text) {
+  const p = allInPremium(text);
+  return p ? p.value : null;
 }
 // Is the premium stated per year? Strong monthly signals win; then look for
 // explicit annual wording. Default monthly (most SA short-term fleet is monthly).
 function premiumIsAnnual(text) {
+  // A quote printing annual and monthly side by side already had its monthly
+  // column taken — a "MONTHLY PREMIUM" column header must not then re-flag it.
+  const picked = allInPremium(text);
+  if (picked && picked.annualPair) return false;
   const t = (text || '').toLowerCase();
-  if (/monthly premium|premium[^.]{0,4}per month|\bper month\b|\bp\/m\b|type of contract\s*:?\s*monthly|payment (?:method|frequency)\s*:?\s*monthly|debit order/.test(t)) return false;
+  if (/monthly premium|premium[^.]{0,4}per month|\bper month\b|\bp\/m\b|type of contract\s*:?\s*monthly|payment (?:method|frequency)\s*:?\s*monthly|debit order|renewing monthly/.test(t)) return false;
   return /annual premium|premium[^.]{0,6}per annum|\bper annum\b|\bp\.?a\.?\b|premium per year|yearly premium|annual total premium/.test(t);
 }
 // SASRIA premium (not an extension limit): the amount right after "sasria",
@@ -2990,36 +3046,224 @@ function crRecommendId(withQuotes, options) {
 }
 
 // RM-only view: the internal findings & actions, hidden from the client copy.
-function crScheduleAudit() {
-  const files = (state.files && state.files.schedule) || [];
-  const text = files.map(f => (f && f.text) || '').join('\n').toLowerCase();
-  if (!text.trim()) return [];
-  const any = (...ws) => ws.some(w => text.includes(w));
-  const fleet = /fleet|vehicle|motor|transport/i.test((state.client.type || ''));
+// ---------------------------------------------------------------------------
+// Schedule audit — the judgement an experienced RM applies by hand, encoded.
+//
+// Every rule here comes from a live comparison where the finding decided the
+// deal. Rules that compare CURRENT against PROPOSED matter most: a quote can be
+// cheaper and still be the wrong answer. Severities: 'gap' (cover missing or
+// lost), 'play' (a Cartrack opportunity), 'time' (timing/forfeiture),
+// 'check' (verify before binding).
+// ---------------------------------------------------------------------------
+function _auditText(kind) {
+  return ((state.files && state.files[kind]) || [])
+    .filter(f => f && f.status === 'ok').map(f => f.text || '').join('\n');
+}
+// Retroactive dates on a claims-made liability section. Returns the EARLIEST
+// found: that is how far back the policy actually reaches.
+function _retroDates(text) {
   const out = [];
-  if (text.includes('telematics') && (text.includes('waiver') || text.includes('excess waiver'))) {
-    out.push({ sev: 'play', tag: 'The play', title: 'Telematics excess waiver is on this schedule',
-      detail: 'The underwriter waives the theft/hijack excess for an approved telematics unit. <b>Confirm Cartrack is on their approved list</b> — if it is, a Cartrack unit eliminates that excess on every vehicle (often the single biggest number on the file). If it is not, escalate to get Cartrack accredited — it applies to every risk this underwriter writes.' });
-  } else if (fleet && any('tracking', 'track and trace', 'tracking device', 'approved tracking', 'stolen vehicle recovery')) {
-    out.push({ sev: 'play', tag: 'The play', title: 'Tracking condition — Cartrack angle',
-      detail: 'The policy references tracking. Verify every vehicle has an <b>approved</b> device recorded (a blank field can mean a repudiated theft claim), and ask the underwriter whether an approved telematics unit earns an excess waiver — that is Cartrack’s to win.' });
+  const re = /retro[\s-]*active\s*date\s*[:\s]*([0-3]?\d[\/\-. ][0-1]?\d[\/\-. ](?:19|20)?\d{2}|(?:19|20)\d{2}[\/\-.][0-1]?\d[\/\-.][0-3]?\d|[0-3]?\d\s+\w{3,9}\s+(?:19|20)\d{2})/gi;
+  let m; while ((m = re.exec(text || ''))) {
+    const d = new Date(m[1].replace(/[.\s]/g, '/').replace(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/, '$1/$2/20$3')
+      .replace(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, '$3-$2-$1'));
+    if (!isNaN(d)) out.push(d);
   }
-  if (any('profit share', 'profit-share', 'cash back', 'cash-back', 'loss ratio', 'savings fund', 'policy fund', 'reserve account', 'no claim bonus', 'no-claim bonus')) {
-    out.push({ sev: 'time', tag: 'Timing', title: 'Profit-share / savings fund detected',
-      detail: 'This policy carries a fund or cash-back mechanism. <b>Moving mid-term may forfeit the accrued reserve.</b> Time the move to renewal and disclose the forfeiture to the client in writing — a replacement-of-policy requirement, not a tactic.' });
+  return out.sort((a, b) => a - b);
+}
+function _fmtD(d) { return d.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }); }
+function _countVehicles(text) {
+  const t = text || '';
+  const regs = new Set();
+  for (const m of t.matchAll(/\b([A-Z]{2,3}\s?\d{2,3}\s?[A-Z]{2}GP|[A-Z]{3}\s?\d{3}\s?[A-Z]{2}|\d{3}\s?[A-Z]{3}\s?[A-Z]{2})\b/g)) regs.add(m[1].replace(/\s/g, ''));
+  return regs.size;
+}
+
+function crScheduleAudit() {
+  const cur = _auditText('schedule');
+  const prop = _auditText('quote');
+  if (!cur.trim() && !prop.trim()) return [];
+  const lc = cur.toLowerCase(), lp = prop.toLowerCase(), both = (lc + '\n' + lp);
+  const anyIn = (h, ...ws) => ws.some(w => h.includes(w));
+  const any = (...ws) => anyIn(both, ...ws);
+  const kind = (state.client.type || '') + ' ' + (state.client.name || '');
+  const fleet = /fleet|vehicle|motor|transport|haul|courier/i.test(kind) || /motor section|vehicle schedule/i.test(both);
+  const contractor = /contract|electric|engineer|construct|plumb|build|install|mechanic/i.test(kind + ' ' + both.slice(0, 4000));
+  const out = [];
+  const push = (sev, tag, title, detail) => out.push({ sev, tag, title, detail });
+
+  /* ---- 1. Claims-made retroactive date: the highest-value catch ---------- */
+  if (/claims\s*made/i.test(both)) {
+    const cD = _retroDates(cur), pD = _retroDates(prop);
+    if (prop && /retro[\s-]*active\s*date\s*[:\s]*(?:inception|policy\s+inception|inception\s+date)/i.test(prop)) {
+      push('gap', 'Retro date', 'Proposed liability restarts the retroactive date at inception',
+        'The quotation sets the claims-made retroactive date to the <b>inception date of the policy</b>. Claims-made liability only answers for work done <i>after</i> that date, so <b>every job the client has already completed would fall out of cover on day one</b>. Get the existing retroactive date carried across <b>in writing</b> before binding — this is not a price question.');
+    } else if (cD.length && pD.length && pD[0] - cD[0] > 32 * 864e5) {
+      const months = Math.round((pD[0] - cD[0]) / (30.44 * 864e5));
+      push('gap', 'Retro date', 'Proposed retroactive date is ' + months + ' months later than the current policy',
+        'Current cover reaches back to <b>' + _fmtD(cD[0]) + '</b>; the proposal starts at <b>' + _fmtD(pD[0]) + '</b>. On claims-made liability that leaves roughly <b>' + months + ' months of completed work uninsured</b>. Ask the insurer to match the existing date or earlier.');
+    } else if (cD.length && !pD.length && prop) {
+      push('check', 'Retro date', 'No retroactive date stated on the proposal',
+        'The current policy carries a retroactive date of <b>' + _fmtD(cD[0]) + '</b> but the quotation does not state one. Unpinned it may default to inception and silently drop past work. <b>Pin it in writing before binding.</b>');
+    }
+    if (cD.length > 1 && (cD[cD.length - 1] - cD[0]) > 32 * 864e5) {
+      push('check', 'Retro date', 'Mismatched retroactive dates on the current policy',
+        'The current liability sections carry different retroactive dates (' + _fmtD(cD[0]) + ' to ' + _fmtD(cD[cD.length - 1]) + '). Where a primary and an excess layer do not share a date, the upper layer may not respond to a claim the primary accepts. Worth raising with the client either way.');
+    }
   }
+
+  /* ---- 2. Products liability / defective workmanship --------------------- */
+  if (contractor) {
+    const excluded = /products?\s+liability[^\n]{0,80}(?:excluded|not\s+covered|\bnil\b|r\s?0[.,]00|\br0\b)|defective\s+workmanship[^\n]{0,60}(?:excluded|no\b|\bnil\b|r\s?0[.,]00)/i.test(both)
+      || (/products?\s+liability|defective\s+workmanship/i.test(both) && /:\s*no\b/i.test(both));
+    if (excluded || !/products?\s+liability/i.test(both)) {
+      push('gap', 'Gap', 'Defective workmanship / products liability not covered',
+        'This is a contracting or installation risk, and the work itself is the client’s largest exposure — a fire or failure traced to work done months earlier. <b>Products liability and defective workmanship appear to be excluded or unquoted.</b> Ask both insurers to price it so the client decides with a number rather than an assumption.');
+    }
+  }
+
+  /* ---- 3. Umbrella / excess layer that cannot attach --------------------- */
+  if (/minimum\s+underlying\s+limit/i.test(prop || both)) {
+    push('gap', 'Gap', 'Umbrella carries a minimum-underlying-limit condition',
+      'The excess/umbrella section only attaches once the underlying sections meet a stated minimum limit. <b>Check each underlying limit against that condition</b> — where the underlying is lower (employers liability and products are the usual offenders) the client carries the difference themselves before the umbrella responds, and the headline limit is illusory.');
+  }
+
+  /* ---- 4. Passenger liability (crews / fare-paying) ---------------------- */
+  if (fleet && /passenger\s+liability/i.test(both)) {
+    const grab = (h) => { const m = /passenger\s+liability[^\n]{0,60}?R?\s?([\d][\d\s.,]*)/i.exec(h); return m ? parseMoney2(m[1]) : null; };
+    const c = grab(cur), p = grab(prop);
+    if (c && p && p < c * 0.95) {
+      push('gap', 'Cover ↓', 'Passenger liability reduced',
+        'Passenger liability drops from <b>' + fmtR(c) + '</b> to <b>' + fmtR(p) + '</b>. Where vehicles carry crews or fare-paying passengers this is usually the decisive cover on the whole file — confirm the client accepts it in writing, or have it lifted back.');
+    }
+    if (/e-?hailing|e\s?hailing/i.test(prop)) {
+      push('gap', 'Wording', 'Passenger liability sits on an e-hailing form',
+        'The proposed passenger liability wording references <b>e-hailing</b>. For a scheduled, scholar or charter operator that form may not respond at all. Get written confirmation from the underwriter that it answers for the operation actually run — this is a gate, not a detail.');
+    }
+  }
+
+  /* ---- 5. Fleet size mismatch between schedule and quotation ------------- */
+  if (fleet && cur && prop) {
+    const nc = _countVehicles(cur), np = _countVehicles(prop);
+    if (nc >= 3 && np >= 1 && np < nc) {
+      push('gap', 'Gap', 'The quotation covers fewer vehicles than the schedule',
+        'Registration numbers found: <b>' + nc + '</b> on the current schedule against <b>' + np + '</b> on the quotation. A quote that omits vehicles is not a like-for-like comparison and will look cheaper than it is. <b>Reconcile the fleet list and the total sum insured before presenting any saving.</b>');
+    }
+  }
+
+  /* ---- 6. Sums insured cut on the proposal (average applies) ------------- */
+  {
+    const si = (h) => { const m = /(?:sum\s+insured|buildings?|rebuild)[^\n]{0,40}?R\s?([\d][\d\s.,]{5,})/i.exec(h); return m ? parseMoney2(m[1]) : null; };
+    const c = si(cur), p = si(prop);
+    if (c && p && p < c * 0.9) {
+      push('gap', 'Cover ↓', 'Sum insured lower on the proposal — average would apply',
+        'A leading sum insured falls from about <b>' + fmtR(c) + '</b> to <b>' + fmtR(p) + '</b>. Under-insurance triggers <b>average</b>: the client bears a proportionate share of <i>every</i> claim, not just a total loss. Confirm the values are deliberate, or have the quote rebuilt to the correct figures before comparing price.');
+    }
+  }
+
+  /* ---- 7. Valuation basis on specialist / collector vehicles ------------- */
+  if (/agreed\s+value/i.test(cur) && prop && !/agreed\s+value/i.test(prop)) {
+    push('gap', 'Cover ↓', 'Agreed value not carried across to the proposal',
+      'The current policy insures at least one vehicle on an <b>agreed value</b> basis; the proposal appears to use retail/market value. On specialist, collector or appreciating vehicles that is a real reduction — retail books understate them, and the shortfall only appears at claim stage.');
+  }
+
+  /* ---- 8. Contents / section carve-outs ---------------------------------- */
+  {
+    const m = /contents[^\n]{0,40}\(\s*excluding([^)]{3,60})\)/i.exec(prop || '');
+    if (m) push('gap', 'Gap', 'Contents quoted with an exclusion',
+      'The proposed contents section is quoted <b>excluding' + crEsc(m[1]) + '</b>. Anything carved out here needs its own section or it is simply uninsured — check whether a matching electronic-equipment or stock section exists on the quote.');
+  }
+
+  /* ---- 9. Tracking: condition, contradiction, and the Cartrack lead ------ */
+  if (both.includes('telematics') && any('waiver', 'excess waiver')) {
+    push('play', 'The play', 'Telematics excess waiver is on this schedule',
+      'The underwriter waives the theft/hijack excess for an approved telematics unit. <b>Confirm Cartrack is on their approved list</b> — if it is, a Cartrack unit eliminates that excess on every vehicle (often the single biggest number on the file). If it is not, escalate to get Cartrack accredited — it applies to every risk this underwriter writes.');
+  } else if (fleet && any('tracking', 'track and trace', 'tracking device', 'approved tracking', 'stolen vehicle recovery', 'early warning')) {
+    push('play', 'The play', 'Tracking condition — Cartrack angle',
+      'The policy or quotation requires tracking for theft and hijack cover. Verify every vehicle has an <b>approved</b> device recorded (a blank field can mean a repudiated theft claim), and note the fitment deadline — where units are outstanding this is both a live cover condition and a <b>Cartrack unit sale</b>.');
+  }
+  if (/(?:below|under|less than|up to)\s*R?\s?3[05]0[\s,]?000[^\n]{0,120}(?:immobilis|alarm)/i.test(prop) &&
+      /theft[^\n]{0,80}subject[^\n]{0,60}(?:tracking|vesa)/i.test(prop)) {
+    push('check', 'Wording', 'Motor security wording contradicts itself',
+      'The quotation says vehicles under a stated value need only an immobiliser or alarm, but a closing clause makes <b>all</b> theft cover subject to an approved tracking device. Read literally the second clause wins and every vehicle needs a unit. <b>Get it clarified in writing</b> — otherwise a theft claim can be repudiated on a vehicle the client believed compliant.');
+  }
+
+  /* ---- 10. Warranties that are conditions precedent ---------------------- */
+  {
+    const w = [];
+    if (/surge\s+arrest|arrestor\s+warranty/i.test(prop)) w.push('surge arrestor');
+    if (/certificate\s+of\s+electrical\s+compliance|electrical\s+certificate/i.test(prop)) w.push('electrical CoC');
+    if (/fire[\s-]*fighting\s+equipment|fire\s+extinguish\w*\s+warranty/i.test(prop)) w.push('fire equipment');
+    if (/alarm\s+warranty/i.test(prop)) w.push('linked alarm');
+    if (w.length) push('check', 'Warranty', 'Conditions precedent on the proposal: ' + w.join(', '),
+      'These are <b>warranties, not suggestions</b> — if the requirement is not in place at the time of loss the claim can fail even where cover clearly exists. Walk them with the client and confirm each is met and documented on day one.');
+  }
+
+  /* ---- 11. Third-party sub-limits hidden under a headline limit ---------- */
+  if (/fire\s+(?:and|&)\s+explosion[^\n]{0,40}R?\s?\d/i.test(prop) && /third\s+party/i.test(prop)) {
+    push('check', 'Wording', 'Third-party liability carries a fire/explosion sub-limit',
+      'The proposed third-party section shows a separate, lower limit for <b>fire and explosion</b>. The headline third-party figure is not what responds to a fire claim — quote the sub-limit to the client, not the headline.');
+  }
+
+  /* ---- 12. Insurer identity / paper mismatch ---------------------------- */
+  {
+    const ins = ['bryte', 'hollard', 'santam', 'guardrisk', 'old mutual', 'infiniti', 'renasa', 'compass', 'western', 'king price'];
+    const named = ins.filter(n => lp.includes(n));
+    if (named.length > 1 && /quotation\s*[-–—]\s*(\w+)/i.test(prop)) {
+      push('check', 'Check', 'More than one insurer named on the quotation',
+        'The quotation references <b>' + named.map(crEsc).join(', ') + '</b>. Where the title and the page footer disagree, confirm <b>which insurer actually carries the risk</b> and have the document reissued on the correct paper before it goes to the client.');
+    }
+  }
+
+  /* ---- 13. Stale current schedule --------------------------------------- */
+  {
+    const ds = [...cur.matchAll(/(?:print(?:ed)?\s*date|date\s*printed)\s*[:\s]*([0-3]?\d[\/\-. ][0-1]?\d[\/\-. ](?:19|20)\d{2})/gi)]
+      .map(m => new Date(m[1].replace(/[.\s]/g, '/').replace(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, '$3-$2-$1'))).filter(d => !isNaN(d));
+    if (ds.length) {
+      const newest = new Date(Math.max(...ds));
+      const months = Math.round((Date.now() - newest) / (30.44 * 864e5));
+      if (months >= 10) push('check', 'Stale', 'The current schedule is about ' + months + ' months old',
+        'The most recent print date found on the current policy is <b>' + _fmtD(newest) + '</b>. Premiums and sums insured will have moved at renewal since then, so any saving measured against it is unreliable. <b>Get the latest schedule before quoting a number to the client.</b>');
+    }
+  }
+
+  /* ---- 14. Fund / profit share and the timing of a move ------------------ */
+  // Deliberately narrow: a no-claim bonus sits on almost every motor policy and
+  // is not a forfeiture risk. Only real fund / profit-share mechanisms qualify.
+  if (any('profit share', 'profit-share', 'cash back', 'cash-back', 'savings fund',
+          'policy fund', 'reserve account', 'reserve fund', 'claims fund', 'own fund')
+      || /loss\s+ratio[^\n]{0,60}(?:rebate|refund|bonus|return|share|below\s*\d)/i.test(both)) {
+    push('time', 'Timing', 'Profit-share / savings fund detected',
+      'This policy carries a fund or cash-back mechanism. <b>Moving mid-term may forfeit the accrued reserve.</b> Ask for the current fund balance and loss ratio, time the move to renewal, and disclose the forfeiture to the client in writing — a replacement-of-policy requirement, not a tactic.');
+  }
+
+  /* ---- 15. Financed assets without shortfall cover ---------------------- */
   if (any('finance', 'financ', 'instal', 'standard bank', 'wesbank', 'absa', 'nedbank', 'motor finance', 'asset finance', 'albaraka')
       && !any('credit shortfall', 'shortfall', 'gap cover', 'top up', 'top-up')) {
-    out.push({ sev: 'gap', tag: 'Gap', title: 'Financed assets — no credit shortfall found',
-      detail: 'Finance references appear but no credit shortfall / GAP cover was detected. On a written-off financed asset the insurer pays market value while the bank is owed the settlement balance — the client pays the difference in cash. Price shortfall on every financed unit.' });
+    push('gap', 'Gap', 'Financed assets — no credit shortfall found',
+      'Finance references appear but no credit shortfall / GAP cover was detected. On a written-off financed asset the insurer pays market value while the bank is owed the settlement balance — the client pays the difference in cash. Price shortfall on every financed unit.');
   }
+
+  /* ---- 16. Goods in transit on a transport risk ------------------------- */
   if (fleet && !any('goods in transit', 'goods-in-transit', ' git ', 'git cover')) {
-    out.push({ sev: 'gap', tag: 'Gap', title: 'No Goods in Transit cover',
-      detail: 'This is a transport risk and no Goods-in-Transit cover was detected. Cargo in the client’s care, custody & control may be uninsured — confirm whether their trading conditions cap that liability, and whether those conditions are in their customer contracts.' });
+    push('gap', 'Gap', 'No Goods in Transit cover',
+      'This is a transport risk and no Goods-in-Transit cover was detected. Cargo in the client’s care, custody & control may be uninsured — confirm whether their trading conditions cap that liability, and whether those conditions are in their customer contracts.');
   }
+
+  /* ---- 17. Cross-border ------------------------------------------------- */
   if (any('namibia', 'mozambique', 'botswana', 'zimbabwe', 'lesotho', 'eswatini', 'swaziland', 'malawi', 'cross-border', 'cross border', 'sadc')) {
-    out.push({ sev: 'check', tag: 'Check', title: 'Cross-border / territorial terms present',
-      detail: 'Territorial extensions appear on this policy. Confirm the routes actually driven are covered <b>at vehicle level</b>, not just in the policy header — a mismatch is a live uninsured exposure on every cross-border trip.' });
+    push('check', 'Check', 'Cross-border / territorial terms present',
+      'Territorial extensions appear on this policy. Confirm the routes actually driven are covered <b>at vehicle level</b>, not just in the policy header — a mismatch is a live uninsured exposure on every cross-border trip.');
+  }
+
+  /* ---- 18. Subject-to conditions that can undo the quote ---------------- */
+  if (/subject\s+to[^\n]{0,40}(?:satisfactory\s+)?survey|quote\s+triggers\s+a\s+survey/i.test(prop)) {
+    push('check', 'Check', 'Terms are subject to a survey',
+      'The quotation is conditional on a satisfactory survey. Terms and price can change afterwards — <b>tell the client the figure is indicative until the survey is cleared</b>, and book it early so inception is not delayed.');
+  }
+  if (/loss\s+ratio\s+below\s+\d+%|claims\s+experience[^\n]{0,60}(?:required|before)/i.test(prop)) {
+    push('check', 'Check', 'Quote is conditional on claims experience',
+      'The insurer requires a written claims history (often a three-year loss ratio under 60%) before terms are confirmed. Obtain it up front — a poor ratio can withdraw the quote entirely, and the client should not hear that after being shown a saving.');
   }
   return out;
 }
@@ -3050,7 +3294,7 @@ function crRmPanel(findings, audit) {
       el('h2', {}, 'Findings & actions before you present'),
       el('p', {}, 'The move is justified wherever cover holds or improves. Only a genuine cover gap is a reason to stay.')),
     auditRows.length ? el('div', {},
-      el('div', { class: 'cr-rm-sub' }, 'Schedule audit · read the current policy, not just the price'),
+      el('div', { class: 'cr-rm-sub' }, 'Schedule audit · what the wordings say, not just the price'),
       el('div', { class: 'cr-rm-list' }, ...auditRows)) : null,
     el('div', { class: 'cr-rm-sub' }, 'Cover comparison · the proposals against today'),
     el('div', { class: 'cr-rm-list' }, ...rows));
