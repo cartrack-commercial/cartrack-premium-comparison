@@ -1,0 +1,4 @@
+# Python bytecode, left beside build.py when the proposal skill runs
+__pycache__/
+*.py[cod]
+.DS_Store
